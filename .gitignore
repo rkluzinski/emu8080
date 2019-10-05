@@ -1,0 +1,11 @@
+// cpu tests mac and asm files
+asm/cpu-tests
+
+// 8080 executable files
+coms
+roms
+cpm30
+
+// project directories
+.vscode
+bin
