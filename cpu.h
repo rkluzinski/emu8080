@@ -87,6 +87,23 @@ private:
 
 	//16bit arithmetic operations
 	uint16_t doubleAddOp(uint16_t);
+
+	void updateFlags();
+
+	void op_inc(uint8_t &reg);
+	void op_dec(uint8_t &reg);
+
+	void op_add(const uint8_t value);
+	void op_add(const uint16_t value);
+	
+	void op_sub(const uint8_t value);
+	void op_cmp(const uint8_t value);
+	void op_xor(const uint8_t value);
+	void op_and(const uint8_t value);
+	void op_or(const uint8_t value);
+
+	void op_addc(const uint8_t value);
+	void op_subb(const uint8_t value);
 };
 
 #endif

@@ -1,6 +1,6 @@
 EXE 		= x80806_64_test
 CXX 		= g++
-CXXFLAGS 	= -Wall -std=c++11 -O0 -g 
+CXXFLAGS 	= -Wall -Werror -std=c++11 -O0 -g
 LDFLAGS 	= 
 
 BIN			= bin

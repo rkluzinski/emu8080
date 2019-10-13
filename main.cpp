@@ -81,9 +81,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    run_test("coms/HELLO.COM", &cpu);
-    run_test("coms/TST8080.COM", &cpu);
-    run_test("coms/8080PRE.COM", &cpu);
+    //run_test("coms/HELLO.COM", &cpu);
+    //run_test("coms/TST8080.COM", &cpu);
+    //run_test("coms/8080PRE.COM", &cpu);
     run_test("coms/8080EXER.COM", &cpu);
 
 	delete cpu.memory;

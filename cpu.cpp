@@ -35,48 +35,8 @@ uint16_t Intel8080::popWord() {
 	return memory[stack_pointer - 2] | (memory[stack_pointer - 1]) << 8;
 }
 
-uint8_t Intel8080::incrementOp(uint8_t r) {
-	uint16_t result = r + 1;
-	C = result > 0xff;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	A = (r & 0xf) + 1 > 0xf;
-	return (uint8_t)result;
-}
-
-uint8_t Intel8080::decrementOp(uint8_t r) {
-	uint16_t result = r - 1;
-	C = result > 0xff;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-	return (uint8_t)result;
-}
-
-uint8_t Intel8080::addOp(uint8_t r) {
-	uint16_t result = register_A + r;
-	C = result > 0xff;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-	return (uint8_t)result;
-}
-
 uint8_t Intel8080::addcOp(uint8_t r) {
 	uint16_t result = register_A + r + C;
-	C = result > 0xff;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-	return (uint8_t)result;
-}
-
-uint8_t Intel8080::subOp(uint8_t r) {
-	uint16_t result = register_A - r;
 	C = result > 0xff;
 	S = result >> 7;
 	Z = (result & 0xff) == 0;
@@ -95,33 +55,6 @@ uint8_t Intel8080::subbOp(uint8_t r) {
 	return (uint8_t)result;
 }
 
-uint8_t Intel8080::andOp(uint8_t r) {
-	uint16_t result = register_A & r;
-	C = 0;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	return (uint8_t)result;
-}
-
-uint8_t Intel8080::xorOp(uint8_t r) {
-	uint16_t result = register_A ^ r;
-	C = 0;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	return (uint8_t)result;
-}
-
-uint8_t Intel8080::orOp(uint8_t r) {
-	uint16_t result = register_A | r;
-	C = 0;
-	S = result >> 7;
-	Z = (result & 0xff) == 0;
-	P = parity((uint8_t)result);
-	return (uint8_t)result;
-}
-
 void Intel8080::compareOp(uint8_t r) {
 	uint16_t result = register_A - r;
 	C = result > 0xff;
@@ -131,18 +64,86 @@ void Intel8080::compareOp(uint8_t r) {
 	A = (register_A & 0xf) + (r & 0xf) > 0xf;
 }
 
-uint16_t Intel8080::doubleAddOp(uint16_t rp) {
-	uint32_t result = register_HL + rp;
-	C = result > 0xffff;
-	return (uint16_t)result;
+void Intel8080::op_inc(uint8_t &value) {
+	++value;
+	C = value < 1;
+	S = value >> 7;
+	Z = value == 0;
+	P = parity(value);
+	A = (value & 0xF) < 1;
+}
+
+void Intel8080::op_dec(uint8_t &value) {
+	--value;
+	C = value < 1;
+	S = value >> 7;
+	Z = value == 0;
+	P = parity(value);
+	A = (value & 0xF) < 1;
+}
+
+void Intel8080::op_add(const uint8_t value) {
+	register_A += value;
+	C = register_A < value;
+	S = register_A >> 7;
+	Z = register_A == 0;
+	P = parity(register_A);
+	A = (register_A & 0xF) < (value & 0xF); 
+}
+
+void Intel8080::op_add(const uint16_t value) {
+	register_HL += value;
+	C = register_HL < value;
+}
+
+void Intel8080::op_sub(const uint8_t value) {
+	C = register_A < value;
+	register_A -= value;
+	S = register_A >> 7;
+	Z = register_A == 0;
+	P = parity(register_A);
+	A = (register_A & 0xF) < (value & 0xF);
+}
+
+void Intel8080::op_cmp(const uint8_t value) {
+	// TODO implement
+}
+
+void Intel8080::op_xor(const uint8_t value) {
+	register_A ^= value;
+	C = 0;
+	S = register_A >> 7;
+	Z = register_A == 0;
+	P = parity(register_A);
+}
+
+void Intel8080::op_and(const uint8_t value) {
+	register_A &= value;
+	C = 0;
+	S = register_A >> 7;
+	Z = register_A == 0;
+	P = parity(register_A);
+}
+
+void Intel8080::op_or(const uint8_t value) {
+	register_A |= value;
+	C = 0;
+	S = register_A >> 7;
+	Z = register_A == 0;
+	P = parity(register_A);
+}
+
+void Intel8080::op_addc(const uint8_t value) {
+
+}
+
+void Intel8080::op_subb(const uint8_t value) {
+
 }
 
 void Intel8080::ExecuteInstruction() {
 	//fetch instruction
 	uint8_t instruction = memory[program_counter++];
-
-	//storage variable for jump and call instructions
-	uint16_t jump_target;
 
 	//execute instructon
 	switch (instruction) {
@@ -185,24 +186,24 @@ void Intel8080::ExecuteInstruction() {
 	case 0x3b: stack_pointer--; break;
 
 		//INR r
-	case 0x04: register_B = incrementOp(register_B); break;
-	case 0x0c: register_C = incrementOp(register_C); break;
-	case 0x14: register_D = incrementOp(register_D); break;
-	case 0x1c: register_E = incrementOp(register_E); break;
-	case 0x24: register_H = incrementOp(register_H); break;
-	case 0x2c: register_L = incrementOp(register_L); break;
-	case 0x34: memory[register_HL] = incrementOp(memory[register_HL]); break;
-	case 0x3c: register_A = incrementOp(register_A);  break;
+	case 0x04: op_inc(register_B); break;
+	case 0x0c: op_inc(register_C); break;
+	case 0x14: op_inc(register_D); break;
+	case 0x1c: op_inc(register_E); break;
+	case 0x24: op_inc(register_H); break;
+	case 0x2c: op_inc(register_L); break;
+	case 0x34: op_inc(memory[register_HL]); break;
+	case 0x3c: op_inc(register_A);  break;
 
 		//DCR r
-	case 0x05: register_B = decrementOp(register_B); break;
-	case 0x0d: register_C = decrementOp(register_C); break;
-	case 0x15: register_D = decrementOp(register_D); break;
-	case 0x1d: register_E = decrementOp(register_E); break;
-	case 0x25: register_H = decrementOp(register_H); break;
-	case 0x2d: register_L = decrementOp(register_L); break;
-	case 0x35: memory[register_HL] = decrementOp(memory[register_HL]); break;
-	case 0x3d: register_A = decrementOp(register_A); break;
+	case 0x05: op_dec(register_B); break;
+	case 0x0d: op_dec(register_C); break;
+	case 0x15: op_dec(register_D); break;
+	case 0x1d: op_dec(register_E); break;
+	case 0x25: op_dec(register_H); break;
+	case 0x2d: op_dec(register_L); break;
+	case 0x35: op_dec(memory[register_HL]); break;
+	case 0x3d: op_dec(register_A); break;
 
 		//MVI r, d8
 	case 0x06: register_B = getNextByte(); break;
@@ -215,10 +216,10 @@ void Intel8080::ExecuteInstruction() {
 	case 0x3e: register_A = getNextByte(); break;
 
 		//DAD rp
-	case 0x09: register_HL = doubleAddOp(register_BC); break;
-	case 0x19: register_HL = doubleAddOp(register_DE); break;
-	case 0x29: register_HL = doubleAddOp(register_HL); break;
-	case 0x39: register_HL = doubleAddOp(stack_pointer); break;
+	case 0x09: op_add(register_BC); break;
+	case 0x19: op_add(register_DE); break;
+	case 0x29: op_add(register_HL); break;
+	case 0x39: op_add(stack_pointer); break;
 
 		//RLC
 	case 0x07:
@@ -363,14 +364,14 @@ void Intel8080::ExecuteInstruction() {
 	case 0x76: halted = true; break;
 
 		//ADD r
-	case 0x80: register_A = addOp(register_B); break;
-	case 0x81: register_A = addOp(register_C); break;
-	case 0x82: register_A = addOp(register_D); break;
-	case 0x83: register_A = addOp(register_E); break;
-	case 0x84: register_A = addOp(register_H); break;
-	case 0x85: register_A = addOp(register_L); break;
-	case 0x86: register_A = addOp(memory[register_HL]); break;
-	case 0x87: register_A = addOp(register_A); break;
+	case 0x80: op_add(register_B); break;
+	case 0x81: op_add(register_C); break;
+	case 0x82: op_add(register_D); break;
+	case 0x83: op_add(register_E); break;
+	case 0x84: op_add(register_H); break;
+	case 0x85: op_add(register_L); break;
+	case 0x86: op_add(memory[register_HL]); break;
+	case 0x87: op_add(register_A); break;
 
 		//ADC r
 	case 0x88: register_A = addcOp(register_B); break;
@@ -383,14 +384,14 @@ void Intel8080::ExecuteInstruction() {
 	case 0x8f: register_A = addcOp(register_A); break;
 
 		//SUB r
-	case 0x90: register_A = subOp(register_B); break;
-	case 0x91: register_A = subOp(register_C); break;
-	case 0x92: register_A = subOp(register_D); break;
-	case 0x93: register_A = subOp(register_E); break;
-	case 0x94: register_A = subOp(register_H); break;
-	case 0x95: register_A = subOp(register_L); break;
-	case 0x96: register_A = subOp(memory[register_HL]); break;
-	case 0x97: register_A = subOp(register_A); break;
+	case 0x90: op_sub(register_B); break;
+	case 0x91: op_sub(register_C); break;
+	case 0x92: op_sub(register_D); break;
+	case 0x93: op_sub(register_E); break;
+	case 0x94: op_sub(register_H); break;
+	case 0x95: op_sub(register_L); break;
+	case 0x96: op_sub(memory[register_HL]); break;
+	case 0x97: op_sub(register_A); break;
 
 		//SBB r
 	case 0x98: register_A = subbOp(register_B); break;
@@ -403,34 +404,34 @@ void Intel8080::ExecuteInstruction() {
 	case 0x9f: register_A = subbOp(register_A); break;
 
 		//ANA r
-	case 0xa0: register_A = andOp(register_B); break;
-	case 0xa1: register_A = andOp(register_C); break;
-	case 0xa2: register_A = andOp(register_D); break;
-	case 0xa3: register_A = andOp(register_E); break;
-	case 0xa4: register_A = andOp(register_H); break;
-	case 0xa5: register_A = andOp(register_L); break;
-	case 0xa6: register_A = andOp(memory[register_HL]); break;
-	case 0xa7: register_A = andOp(register_A); break;
+	case 0xa0: op_and(register_B); break;
+	case 0xa1: op_and(register_C); break;
+	case 0xa2: op_and(register_D); break;
+	case 0xa3: op_and(register_E); break;
+	case 0xa4: op_and(register_H); break;
+	case 0xa5: op_and(register_L); break;
+	case 0xa6: op_and(memory[register_HL]); break;
+	case 0xa7: op_and(register_A); break;
 
 		//XRA r
-	case 0xa8: register_A = xorOp(register_B); break;
-	case 0xa9: register_A = xorOp(register_C); break;
-	case 0xaa: register_A = xorOp(register_D); break;
-	case 0xab: register_A = xorOp(register_E); break;
-	case 0xac: register_A = xorOp(register_H); break;
-	case 0xad: register_A = xorOp(register_L); break;
-	case 0xae: register_A = xorOp(memory[register_HL]); break;
-	case 0xaf: register_A = xorOp(register_A); break;
+	case 0xa8: op_xor(register_B); break;
+	case 0xa9: op_xor(register_C); break;
+	case 0xaa: op_xor(register_D); break;
+	case 0xab: op_xor(register_E); break;
+	case 0xac: op_xor(register_H); break;
+	case 0xad: op_xor(register_L); break;
+	case 0xae: op_xor(memory[register_HL]); break;
+	case 0xaf: op_xor(register_A); break;
 
 		//ORA r
-	case 0xb0: register_A = orOp(register_B); break;
-	case 0xb1: register_A = orOp(register_C); break;
-	case 0xb2: register_A = orOp(register_D); break;
-	case 0xb3: register_A = orOp(register_E); break;
-	case 0xb4: register_A = orOp(register_H); break;
-	case 0xb5: register_A = orOp(register_L); break;
-	case 0xb6: register_A = orOp(memory[register_HL]); break;
-	case 0xb7: register_A = orOp(register_A); break;
+	case 0xb0: op_or(register_B); break;
+	case 0xb1: op_or(register_C); break;
+	case 0xb2: op_or(register_D); break;
+	case 0xb3: op_or(register_E); break;
+	case 0xb4: op_or(register_H); break;
+	case 0xb5: op_or(register_L); break;
+	case 0xb6: op_or(memory[register_HL]); break;
+	case 0xb7: op_or(register_A); break;
 
 		//CMP r
 	case 0xb8: compareOp(register_B); break;
@@ -602,13 +603,13 @@ void Intel8080::ExecuteInstruction() {
 	case 0xd3: output_device(getNextByte(), register_A); break; //OUT d8
 	case 0xdb: register_A = input_device(getNextByte()); break; //IN d8
 
-	case 0xc6: register_A = addOp(getNextByte()); break; //ADI d8
-	case 0xd6: register_A = subOp(getNextByte()); break; //SUI d8
-	case 0xe6: register_A = andOp(getNextByte()); break; //ANI d8
-	case 0xf6: register_A = orOp(getNextByte()); break; //ORI d8
+	case 0xc6: op_add(getNextByte()); break; //ADI d8
+	case 0xd6: op_sub(getNextByte()); break; //SUI d8
+	case 0xe6: op_and(getNextByte()); break; //ANI d8
+	case 0xf6: op_or(getNextByte()); break; //ORI d8
 	case 0xce: register_A = addcOp(getNextByte()); break; //ACI d8
 	case 0xde: register_A = subbOp(getNextByte()); break; //SBI d8
-	case 0xee: register_A = xorOp(getNextByte()); break; //XRI d8
+	case 0xee: op_xor(getNextByte()); break; //XRI d8
 	case 0xfe: compareOp(getNextByte()); break; //CPI d8
 
 	//XHTL
