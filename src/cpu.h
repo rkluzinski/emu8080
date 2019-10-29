@@ -63,7 +63,11 @@ private:
 		uint16_t register_HL;
 	};
 
+	// stores the jump target until needed
 	uint16_t jump_target;
+
+	// stores the ALU result for lazy flag evaluation
+	uint16_t alu_result;
 
 	//functions
 	uint8_t getNextByte();
@@ -71,6 +75,13 @@ private:
 	
 	void pushWord(uint16_t);
 	uint16_t popWord();
+
+	// flag evaluation functions
+	uint8_t getCarryFlag();
+	uint8_t getAuxCarryFlag();
+	uint8_t getSignFlag();
+	uint8_t getZeroFlag();
+	uint8_t getParityFlag();
 
 	//8bit arithmetic operations
 	uint8_t incrementOp(uint8_t);

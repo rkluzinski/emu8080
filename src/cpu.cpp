@@ -35,6 +35,26 @@ uint16_t Intel8080::popWord() {
 	return memory[stack_pointer - 2] | (memory[stack_pointer - 1]) << 8;
 }
 
+uint8_t Intel8080::getCarryFlag() {
+	return alu_result > 0xff;
+}
+
+uint8_t Intel8080::getAuxCarryFlag() {
+
+}
+
+uint8_t Intel8080::getSignFlag() {
+
+}
+
+uint8_t Intel8080::getZeroFlag() {
+
+}
+
+uint8_t Intel8080::getParityFlag() {
+
+}
+
 uint8_t Intel8080::addcOp(uint8_t r) {
 	uint16_t result = register_A + r + C;
 	C = result > 0xff;

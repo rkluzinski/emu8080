@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#include "cpu.h"
+#include "../src/cpu.h"
 
 bool load_rom(std::string path, uint8_t *memory) {
 	std::ifstream rom(path, std::ios::in | std::ios::binary);
@@ -76,15 +76,15 @@ int main(int argc, char **argv) {
 
 	//load custom bdos routine for tests
     std::cout << "(x80806_64) Loading roms/BDOS" << std::endl;
-	if (!load_rom("roms/BDOS", cpu.memory)) {
+	if (!load_rom("../roms/BDOS", cpu.memory)) {
         delete cpu.memory;
         return 1;
     }
 
-    //run_test("coms/HELLO.COM", &cpu);
-    //run_test("coms/TST8080.COM", &cpu);
-    //run_test("coms/8080PRE.COM", &cpu);
-    run_test("coms/8080EXER.COM", &cpu);
+    //run_test("../coms/HELLO.COM", &cpu);
+    run_test("../coms/TST8080.COM", &cpu);
+    //run_test("../coms/8080PRE.COM", &cpu);
+    //run_test("../coms/8080EXER.COM", &cpu);
 
 	delete cpu.memory;
 	return 0;
