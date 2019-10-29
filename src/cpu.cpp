@@ -1,5 +1,21 @@
 #include "cpu.h"
 
+Intel8080::Intel8080() {
+
+}
+
+Intel8080::~Intel8080() {
+
+}
+
+void Intel8080::reset() {
+
+}
+
+std::size_t executeInstruction() {
+    
+}
+
 //https://stackoverflow.com/questions/21617970
 // uint8_t parity(uint8_t byte) {
 // 	byte ^= byte >> 4;

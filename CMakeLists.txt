@@ -5,9 +5,11 @@ if (${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 project("x80806_64" VERSION 0.1 LANGUAGES CXX)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
-add_library(cpu8080 STATIC src/cpu.cpp src/cpu.h)
+add_library(intel8080 STATIC src/cpu.cpp src/cpu.h)
 
-add_executable(cpu_test test/test.cpp)
-target_link_libraries(cpu_test PRIVATE cpu8080)
+# cpu test executables here
+
+add_executable(test_cpu src/main.cpp)
+target_link_libraries(test_cpu PRIVATE intel8080)
