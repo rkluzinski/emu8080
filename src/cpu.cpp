@@ -1,19 +1,20 @@
 #include "cpu.h"
 
 Intel8080::Intel8080() {
-
+    memory = new uint8_t[0x10000];
+    reset();
 }
 
 Intel8080::~Intel8080() {
-
+    delete[] memory;
 }
 
 void Intel8080::reset() {
-
+    program_counter = 0;
 }
 
 std::size_t executeInstruction() {
-    
+
 }
 
 //https://stackoverflow.com/questions/21617970

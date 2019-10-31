@@ -6,8 +6,7 @@
 struct RegisterPair {
 	union {
 		struct {
-			// little endian specific
-			uint8_t low;
+			uint8_t low;	// little endian specific
 			uint8_t high;
 		} byte;
 		uint16_t word;
