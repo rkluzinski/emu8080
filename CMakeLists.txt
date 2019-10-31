@@ -6,10 +6,12 @@ endif()
 
 project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(intel8080 STATIC src/cpu.cpp src/cpu.h)
 
-# cpu test executables here
+add_executable(tst8080 test/tst8080.cpp test/utils.cpp test/utils.h)
+target_link_libraries(tst8080 PRIVATE intel8080)
 
 add_executable(test_cpu src/main.cpp)
 target_link_libraries(test_cpu PRIVATE intel8080)

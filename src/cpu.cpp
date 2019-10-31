@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "cpu.h"
 
 Intel8080::Intel8080() {
@@ -10,11 +11,44 @@ Intel8080::~Intel8080() {
 }
 
 void Intel8080::reset() {
+    halted = false;
     program_counter = 0;
 }
 
-std::size_t executeInstruction() {
+void Intel8080::dump() {
+    // dump program counter, stack pointer, registers
+    printf("PC  = 0x%.4x\n", program_counter);
+    printf("SP  = 0x%.4x\n", stack_pointer);
+    printf("BC  = 0x%.4x\n", register_BC);
+    printf("DE  = 0x%.4x\n", register_DE);
+    printf("HL  = 0x%.4x\n", register_HL);
+    printf("PSW = 0x%.4x\n", register_PSW);
+    
+    // dump current instruction
+    printf("Current instruction: 0x%.2x\n", memory[program_counter]);
+    // std::cout << "Instruction: 0x";
+    // std::cout << std::hex << (int) memory[program_counter] << std::endl;
+}
 
+std::size_t Intel8080::executeInstruction() {
+    uint8_t instruction = memory[program_counter++];
+    
+    switch (instruction) {
+        default:
+            program_counter--;  // restore program counter
+            throw Intel8080Exception("Unimplemented Instruction");
+    }
+
+    // TODO return real cycle count
+    return 4;
+}
+
+std::size_t Intel8080::execute() {
+    std::size_t cycle_count = 0;
+    
+    while (!halted) {
+        cycle_count += executeInstruction();
+    }
 }
 
 //https://stackoverflow.com/questions/21617970

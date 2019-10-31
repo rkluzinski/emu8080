@@ -1,60 +1,80 @@
 #ifndef INTEL_8080_H
 #define INTEL_8080_H
 
+#include <string>
 #include <cstdint>
 
-struct RegisterPair {
-	union {
-		struct {
-			uint8_t low;	// little endian specific
-			uint8_t high;
-		} byte;
-		uint16_t word;
-	};
+class Intel8080Exception : public std::exception {
+	std::string _message;
+
+public:
+	Intel8080Exception() : _message("") {}
+	Intel8080Exception(const char *message) : _message(message) {}
+	Intel8080Exception(std::string message) : _message(message) {}
+
+	const char *what() {
+		return _message.c_str();
+	}
 };
 
 class Intel8080 {
-	RegisterPair BC;
-	RegisterPair DE;
-	RegisterPair HL;
-	RegisterPair PSW;
+	union { 
+		struct {
+			uint8_t register_C;
+			uint8_t register_B;
+		};
+		uint16_t register_BC;
+	};
+	union {
+		struct {
+			uint8_t register_E;
+			uint8_t register_D;
+		};
+		uint16_t register_DE;
+	}; 
+	union {
+		struct {
+			uint8_t register_L;
+			uint8_t register_H;
+		};
+		uint16_t register_HL;
+	}; 
+	union {
+		struct {
+			uint8_t flags;
+			uint8_t register_A;
+		};
+		uint16_t register_PSW;
+	};
 
 	uint16_t stack_pointer;
 	uint16_t program_counter;
 
 	uint8_t *memory;
 
+	bool halted;
+
 public:
 	Intel8080();
+	// TODO other constructors
 	~Intel8080();
 
 	void reset();
 
+	// TODO replace 
+	uint8_t *getMemory() {
+		return memory;
+	}
+
+	// debugging utilities
+	void dump();
+
 	std::size_t executeInstruction();
+	std::size_t execute();
 
-	/**
-	 * Registers are aliases with the access function defined below
-	 * Reference members would take up an additional 8 bytes per reference
-	 * These technique has no overhead because it will be optimized away.
-	 */
-	
-	// 8-bit register aliases
-	uint8_t &register_B() { return BC.byte.high; }
-	uint8_t &register_C() { return BC.byte.low; }
-	uint8_t &register_D() { return DE.byte.high; }
-	uint8_t &register_E() { return DE.byte.low; }
-	uint8_t &register_H() { return HL.byte.high; }
-	uint8_t &register_L() { return HL.byte.low; }
-	uint8_t &register_A() { return PSW.byte.high; }
-	// TODO flags alias
-
-	// 16-bit register aliases
-	uint16_t &register_BC() { return BC.word; }
-	uint16_t &register_DE() { return DE.word; }
-	uint16_t &register_HL() { return HL.word; }
-	// TODO psw alias
-
-	//
+private:
+	// helper functions
+	// opcodes
 };
 
 #endif
