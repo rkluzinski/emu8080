@@ -73,8 +73,18 @@ public:
 	std::size_t execute();
 
 private:
-	// helper functions
-	// opcodes
+	uint8_t nextByte();
+	uint16_t nextWord();
+
+	void pushWord(uint16_t word);
+	uint16_t popWord();
+
+	// branching instructions
+	void jump(bool condition);
+	void call(bool condition);
+
+	// complex opcodes
+	void XCHG();
 };
 
 #endif

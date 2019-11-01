@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(intel8080 STATIC src/cpu.cpp src/cpu.h)
 
+add_executable(hello test/hello.cpp test/utils.cpp test/utils.h)
+target_link_libraries(hello PRIVATE intel8080)
+
 add_executable(tst8080 test/tst8080.cpp test/utils.cpp test/utils.h)
 target_link_libraries(tst8080 PRIVATE intel8080)
-
-add_executable(test_cpu src/main.cpp)
-target_link_libraries(test_cpu PRIVATE intel8080)

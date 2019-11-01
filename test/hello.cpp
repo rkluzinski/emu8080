@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     
     try {
         loadBinary("../roms/BDOS", cpu.getMemory(), MEMORY_SIZE);
-        loadBinary("../coms/TST8080.COM", cpu.getMemory() + 0x100, MEMORY_SIZE - 0x100);
+        loadBinary("../coms/HELLO.COM", cpu.getMemory() + 0x100, MEMORY_SIZE - 0x100);
         
         std::size_t cycles = cpu.execute();
         std::cout << "Cycles executed: " << cycles << std::endl;

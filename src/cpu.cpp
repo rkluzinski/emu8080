@@ -12,7 +12,8 @@ Intel8080::~Intel8080() {
 
 void Intel8080::reset() {
     halted = false;
-    program_counter = 0;
+    //program_counter = 0;
+    program_counter = 0x100; // TODO change later
 }
 
 void Intel8080::dump() {
@@ -26,14 +27,41 @@ void Intel8080::dump() {
     
     // dump current instruction
     printf("Current instruction: 0x%.2x\n", memory[program_counter]);
-    // std::cout << "Instruction: 0x";
-    // std::cout << std::hex << (int) memory[program_counter] << std::endl;
 }
 
 std::size_t Intel8080::executeInstruction() {
     uint8_t instruction = memory[program_counter++];
     
     switch (instruction) {
+        case 0x00: break;   // NOP
+        
+        case 0x08: break;   // NOP
+        case 0x0e: register_C = nextByte(); break;  // MVI C, d8
+
+        case 0x10: break;   // NOP
+        case 0x11: register_DE = nextWord(); break;     // LXI DE, d16
+        
+        case 0x18: break;   // NOP
+
+        case 0x20: break;   // NOP
+        case 0x21: register_HL = nextWord(); break;     // LXI HL, d16
+        
+        case 0x28: break;   // NOP
+
+        case 0x30: break;   // NOP
+        case 0x31: stack_pointer = nextWord(); break;   // LXI SP, d16
+        
+        case 0x38: break;   // NOP
+        case 0x3e: register_A = nextByte(); break;  // MVI C, d8
+
+        case 0xc3: jump(true); break;   // JMP d16
+
+        case 0xcd: call(true); break;   // CALL d16
+
+        case 0xd5: pushWord(register_DE); break;    // PUSH DE
+
+        case 0xeb: XCHG(); break;   // XCHG
+
         default:
             program_counter--;  // restore program counter
             throw Intel8080Exception("Unimplemented Instruction");
@@ -49,6 +77,49 @@ std::size_t Intel8080::execute() {
     while (!halted) {
         cycle_count += executeInstruction();
     }
+}
+
+uint8_t Intel8080::nextByte() {
+    return memory[program_counter++];
+}
+
+uint16_t Intel8080::nextWord() {
+    // TODO fix only works on litte-endian machines
+    uint16_t word = *(uint16_t *) &memory[program_counter];
+    program_counter += 2;
+    return word;
+}
+
+void Intel8080::pushWord(uint16_t word) {
+    stack_pointer -= 2;
+    // TODO fix only works on litte-endian machines
+    *(uint16_t *) &memory[stack_pointer] = word;
+}
+
+uint16_t Intel8080::popWord() {
+    // TODO fix only works on litte-endian machines
+    uint16_t word = *(uint16_t *) &memory[stack_pointer];
+    stack_pointer += 2;
+    return word;
+}
+
+void Intel8080::jump(bool condition) {
+    if (condition) {
+        program_counter = nextWord();
+    }
+}
+
+void Intel8080::call(bool condition) {
+    if (condition) {
+        pushWord(program_counter);
+        program_counter = nextWord();
+    }
+}
+
+void Intel8080::XCHG() {
+    uint16_t temp = register_HL;
+    register_HL = register_DE;
+    register_DE = temp;
 }
 
 //https://stackoverflow.com/questions/21617970
