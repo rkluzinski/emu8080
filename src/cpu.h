@@ -4,6 +4,9 @@
 #include <string>
 #include <cstdint>
 
+typedef uint8_t (*in_handler_t)(uint8_t);
+typedef void (*out_handler_t)(uint8_t, uint8_t);
+
 class Intel8080Exception : public std::exception {
 	std::string _message;
 
@@ -47,19 +50,33 @@ class Intel8080 {
 		uint16_t register_PSW;
 	};
 
+	// for lazy flag evaluation
+	struct OpCache {
+		uint8_t src;
+		uint8_t dst;
+		uint8_t result;
+	} opCache;
+
+	// for I/O ports
+	in_handler_t in_handler;
+	out_handler_t out_handler;
+
+	bool halted;
+
 	uint16_t stack_pointer;
 	uint16_t program_counter;
 
 	uint8_t *memory;
 
-	bool halted;
-
 public:
 	Intel8080();
-	// TODO other constructors
+	Intel8080(std::size_t mem_size);
 	~Intel8080();
 
 	void reset();
+
+	void setInHandler(in_handler_t);
+	void setOutHandler(out_handler_t);
 
 	// TODO replace 
 	uint8_t *getMemory() {
@@ -79,9 +96,18 @@ private:
 	void pushWord(uint16_t word);
 	uint16_t popWord();
 
+	// flag operations
+	bool zeroFlag();
+
+	// arithmetic instructions
+	void increment(uint8_t &dst);
+	void decrement(uint8_t &dst);
+	void compare(uint8_t src);
+
 	// branching instructions
 	void jump(bool condition);
 	void call(bool condition);
+	void _return(bool condition);
 
 	// complex opcodes
 	void XCHG();

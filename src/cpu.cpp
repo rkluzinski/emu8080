@@ -1,8 +1,25 @@
 #include <stdio.h>
 #include "cpu.h"
 
+uint8_t defaultInHandler(uint8_t) {
+    return 0;
+}
+
+void defaultOutHandler(uint8_t, uint8_t) {
+    return;
+}
+
 Intel8080::Intel8080() {
     memory = new uint8_t[0x10000];
+    in_handler = defaultInHandler;
+    out_handler = defaultOutHandler;
+    reset();
+}
+
+Intel8080::Intel8080(std::size_t mem_size) {
+    memory = new uint8_t[mem_size];
+    in_handler = defaultInHandler;
+    out_handler = defaultOutHandler;
     reset();
 }
 
@@ -14,6 +31,14 @@ void Intel8080::reset() {
     halted = false;
     //program_counter = 0;
     program_counter = 0x100; // TODO change later
+}
+
+void Intel8080::setInHandler(in_handler_t in) {
+    in_handler = in;
+}
+
+void Intel8080::setOutHandler(out_handler_t out) {
+    out_handler = out;
 }
 
 void Intel8080::dump() {
@@ -34,14 +59,18 @@ std::size_t Intel8080::executeInstruction() {
     
     switch (instruction) {
         case 0x00: break;   // NOP
+        case 0x05: decrement(register_B); break;    // DCR B
         
         case 0x08: break;   // NOP
         case 0x0e: register_C = nextByte(); break;  // MVI C, d8
 
         case 0x10: break;   // NOP
         case 0x11: register_DE = nextWord(); break;     // LXI DE, d16
+        case 0x13: ++register_DE; break;   // INX DE
+        case 0x14: increment(register_D); break;   // INR D
         
         case 0x18: break;   // NOP
+        case 0x1a: register_A = memory[register_DE]; break; // LDAX DE
 
         case 0x20: break;   // NOP
         case 0x21: register_HL = nextWord(); break;     // LXI HL, d16
@@ -54,13 +83,22 @@ std::size_t Intel8080::executeInstruction() {
         case 0x38: break;   // NOP
         case 0x3e: register_A = nextByte(); break;  // MVI C, d8
 
+        case 0x76: halted = true; break;    // HLT
+
+        case 0xb9: compare(register_C); break;  // CMP C
+
         case 0xc3: jump(true); break;   // JMP d16
 
+        case 0xc8: _return(zeroFlag()); break;  // RZ
+        case 0xca: jump(zeroFlag()); break;     // JZ d16
         case 0xcd: call(true); break;   // CALL d16
 
+        case 0xd3: out_handler(nextByte(), register_A); break;
         case 0xd5: pushWord(register_DE); break;    // PUSH DE
 
         case 0xeb: XCHG(); break;   // XCHG
+
+        case 0xfe: compare(nextByte()); break;  //CPI d8
 
         default:
             program_counter--;  // restore program counter
@@ -77,6 +115,8 @@ std::size_t Intel8080::execute() {
     while (!halted) {
         cycle_count += executeInstruction();
     }
+
+    return cycle_count;
 }
 
 uint8_t Intel8080::nextByte() {
@@ -103,6 +143,28 @@ uint16_t Intel8080::popWord() {
     return word;
 }
 
+void Intel8080::increment(uint8_t &dst) {
+    opCache.dst = dst;
+    opCache.src = 1;
+    opCache.result = ++dst;
+}
+
+void Intel8080::decrement(uint8_t &dst) {
+    opCache.dst = dst;
+    opCache.src = -1;
+    opCache.result = --dst;
+}
+
+void Intel8080::compare(uint8_t src) {
+    opCache.src = src;
+    opCache.dst = register_A;
+    opCache.result = register_A - src;
+}
+
+bool Intel8080::zeroFlag() {
+    return opCache.result == 0;
+}
+
 void Intel8080::jump(bool condition) {
     if (condition) {
         program_counter = nextWord();
@@ -113,6 +175,12 @@ void Intel8080::call(bool condition) {
     if (condition) {
         pushWord(program_counter);
         program_counter = nextWord();
+    }
+}
+
+void Intel8080::_return(bool condition) {
+    if (condition) {
+        program_counter = popWord();
     }
 }
 
