@@ -107,7 +107,12 @@ private:
 	void decrement(uint8_t &dst);
 
 	void _add(uint8_t src);
+	void _addc(uint8_t src);
+	void _sub(uint8_t src);
+	void _subb(uint8_t src);
 	void _and(uint8_t src);
+	void _xor(uint8_t src);
+	void _or(uint8_t src);
 	void _compare(uint8_t src);
 
 	// branching instructions
