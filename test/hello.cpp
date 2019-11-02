@@ -3,7 +3,7 @@
 #include <string>
 
 #include "utils.h"
-#include "../src/cpu.h"
+#include "../cpu/cpu.h"
 
 int main(int argc, char **argv) {
     constexpr std::size_t MEMORY_SIZE = 0x10000;

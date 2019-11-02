@@ -21,6 +21,8 @@ public:
 };
 
 class Intel8080 {
+	friend class Intel8080Debugger;
+	
 	union { 
 		struct {
 			uint8_t register_C;

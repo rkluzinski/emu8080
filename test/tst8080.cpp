@@ -3,7 +3,7 @@
 #include <string>
 
 #include "utils.h"
-#include "../src/cpu.h"
+#include "../cpu/cpu.h"
 
 int main(int argc, char **argv) {
 	Intel8080 cpu;

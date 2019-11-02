@@ -67,7 +67,7 @@ std::size_t Intel8080::executeInstruction() {
         case 0x10: break;   // NOP
         case 0x11: register_DE = nextWord(); break;     // LXI DE, d16
         case 0x13: ++register_DE; break;   // INX DE
-        case 0x14: increment(register_D); break;   // INR D
+        //case 0x14: increment(register_D); break;   // INR D
         
         case 0x18: break;   // NOP
         case 0x1a: register_A = memory[register_DE]; break; // LDAX DE
@@ -166,15 +166,17 @@ bool Intel8080::zeroFlag() {
 }
 
 void Intel8080::jump(bool condition) {
+    uint16_t jump_target = nextWord();
     if (condition) {
-        program_counter = nextWord();
+        program_counter = jump_target;
     }
 }
 
 void Intel8080::call(bool condition) {
+    uint16_t jump_target = nextWord();
     if (condition) {
         pushWord(program_counter);
-        program_counter = nextWord();
+        program_counter = jump_target;
     }
 }
 

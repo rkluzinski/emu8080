@@ -7,7 +7,7 @@ endif()
 project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Debug)
 
-add_library(intel8080 STATIC src/cpu.cpp src/cpu.h)
+add_library(intel8080 STATIC cpu/cpu.cpp cpu/cpu.h)
 
 add_executable(hello test/hello.cpp test/utils.cpp test/utils.h)
 target_link_libraries(hello PRIVATE intel8080)
