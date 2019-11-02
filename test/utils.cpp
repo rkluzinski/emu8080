@@ -24,5 +24,5 @@ void outputDevice(uint8_t port, uint8_t byte) {
         throw TestException("Invalid I/O port write");
     }
 
-    std::cout << byte;
+    std::cout << (char) byte;
 }

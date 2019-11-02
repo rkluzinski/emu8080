@@ -95,31 +95,36 @@ std::size_t Intel8080::executeInstruction() {
 
         case 0xb9: _compare(register_C); break;  // CMP C
 
-        case 0xc3: _jump(true); break;   // JMP d16
-        case 0xc6: _add(nextByte()); break;
+        case 0xc2: _jump(!zeroFlag()); break;   // JNZ d15
+        case 0xc3: _jump(true); break;          // JMP d16
+        case 0xc6: _add(nextByte()); break;     // ADI d8
 
         case 0xc8: _return(zeroFlag()); break;  // RZ
         case 0xc9: _return(true); break;        // RET
-        case 0xca: _jump(zeroFlag()); break;     // JZ d16
-        case 0xcd: _call(true); break;           // _call d16
+        case 0xca: _jump(zeroFlag()); break;    // JZ d16
+        case 0xcd: _call(true); break;          // _call d16
 
         case 0xd1: register_DE = popWord(); break;              // POP D
         case 0xd2: _jump(!carryFlag()); break;                  // JNC d16
         case 0xd3: out_handler(nextByte(), register_A); break;  // OUT d8
         case 0xd5: pushWord(register_DE); break;                // PUSH D
 
+        case 0xda: _jump(carryFlag()); break;   // JC d16
+
         case 0xe1: register_HL = popWord(); break;  // POP H
+        case 0xe2: _jump(!parityFlag()); break;     // JPE d16
         case 0xe5: pushWord(register_HL); break;    // PUSH H
         case 0xe6: _and(nextByte()); break;         // ANI d8
 
-        case 0xea: _jump(!parityFlag()); break; // JPE d16
+        case 0xea: _jump(parityFlag()); break;  // JPE d16
         case 0xeb: XCHG(); break;               // XCHG
 
         case 0xf1: register_PSW = popWord(); break; // POP PSW
+        case 0xf2: _jump(!signFlag()); break;       // JPE d16
         case 0xf5: pushWord(register_PSW); break;   // PUSH PSW
 
-        case 0xfa: _jump(signFlag());
-        case 0xfe: _compare(nextByte()); break;  //CPI d8
+        case 0xfa: _jump(signFlag()); break;    // JM d16
+        case 0xfe: _compare(nextByte()); break; // CPI d8
 
         default:
             program_counter--;  // restore program counter
@@ -127,7 +132,7 @@ std::size_t Intel8080::executeInstruction() {
     }
 
     // TODO return real cycle count
-    return 4;
+    return 1;
 }
 
 std::size_t Intel8080::execute() {
@@ -165,29 +170,31 @@ uint16_t Intel8080::popWord() {
 }
 
 void Intel8080::increment(uint8_t &dst) {
-    lazy.carry = (dst & 1) | ((dst | 1) & ~(++dst));    
-    lazy.result = dst;
+    uint16_t result = dst + 1;
+    lazy.carry = result > 0xff;    
+    lazy.result = ++dst;
 }
 
 void Intel8080::decrement(uint8_t &dst) {
-    lazy.carry = (dst & -1) | ((dst | -1) & ~(--dst));    
-    lazy.result = dst;
+    uint16_t result = dst - 1;
+    lazy.carry = result > 0xff;   
+    lazy.result = --dst;
 }
 
 void Intel8080::_add(uint8_t src) {
-    lazy.result = register_A + src;
-    lazy.carry = (register_A & src) | ((register_A | src) & ~lazy.result);    
-    register_A = lazy.result;
+    uint16_t result = register_A + src;
+    lazy.carry = result > 0xff;
+    lazy.result = register_A = result;
 }
 
 void Intel8080::_and(uint8_t src) {
     lazy.carry = 0;
-    lazy.result = register_A & src;
+    lazy.result = register_A &= src;
 }
 
 void Intel8080::_compare(uint8_t src) {
-    uint8_t result = register_A - src;
-    lazy.carry = (register_A & src) | ((register_A | src) & ~result);
+    uint16_t result = register_A - src;
+    lazy.carry = result > 0xff;
     lazy.result = result;
 }
 
@@ -234,7 +241,7 @@ void Intel8080::_return(bool condition) {
 }
 
 void Intel8080::RLC() {
-    lazy.carry = (register_A & 0x80) == 0x80;
+    lazy.carry = register_A >> 7;
 	register_A = (register_A << 1) | (lazy.carry & 1);
 }
 
