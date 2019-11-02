@@ -59,39 +59,117 @@ std::size_t Intel8080::executeInstruction() {
     
     switch (instruction) {
         case 0x00: break;                           // NOP
+        case 0x04: increment(register_B); break;    // INR B
         case 0x05: decrement(register_B); break;    // DCR B
         case 0x07: RLC(); break;
         
         case 0x08: break;                           // NOP
+        case 0x0c: increment(register_C); break;    // INR C
+        case 0x0d: decrement(register_C); break;    // DCR D
         case 0x0e: register_C = nextByte(); break;  // MVI C, d8
         case 0x0f: RRC(); break;                    // RRC
 
-        case 0x10: break;                               // NOP
-        case 0x11: register_DE = nextWord(); break;     // LXI D, d16
-        case 0x13: ++register_DE; break;                // INX D
-        //case 0x14: increment(register_D); break;        // INR D
+        case 0x10: break;                           // NOP
+        case 0x11: register_DE = nextWord(); break; // LXI D, d16
+        case 0x13: ++register_DE; break;            // INX D
+        case 0x14: increment(register_D); break;    // INR D
+        case 0x15: decrement(register_D); break;    // DCR D
         
         case 0x18: break;                                   // NOP
         case 0x1a: register_A = memory[register_DE]; break; // LDAX D
+        case 0x1c: increment(register_E); break;            // INR E
+        case 0x1d: decrement(register_E); break;            // DCR E
 
-        case 0x20: break;                               // NOP
-        case 0x21: register_HL = nextWord(); break;     // LXI HL, d16
+        case 0x20: break;                           // NOP
+        case 0x21: register_HL = nextWord(); break; // LXI HL, d16
+        case 0x24: increment(register_H); break;    // INR H
+        case 0x25: decrement(register_H); break;    // DCR H
         
-        case 0x28: break;   // NOP
+        case 0x28: break;                           // NOP
+        case 0x2c: increment(register_L); break;    // INR L
+        case 0x2d: decrement(register_L); break;    // DCR L
 
-        case 0x30: break;                               // NOP
-        case 0x31: stack_pointer = nextWord(); break;   // LXI SP, d16
+        case 0x30: break;                                   // NOP
+        case 0x31: stack_pointer = nextWord(); break;       // LXI SP, d16
+        case 0x34: increment(memory[register_HL]); break;   // INR H
+        case 0x35: decrement(memory[register_HL]); break;   // DCR H
         
         case 0x38: break;                           // NOP
+        case 0x3c: increment(register_A); break;    // INR A
+        case 0x3d: decrement(register_A); break;    // DCR A
         case 0x3e: register_A = nextByte(); break;  // MVI C, d8
 
+        case 0x40: register_B = register_B; break;  // MOV B, B
+        case 0x41: register_B = register_C; break;  // MOV B, C
+        case 0x42: register_B = register_D; break;  // MOV B, D
+        case 0x43: register_B = register_E; break;  // MOV B, E
+        case 0x44: register_B = register_H; break;  // MOV B, H
+        case 0x45: register_B = register_L; break;  // MOV B, L
+        case 0x46: register_B = memory[register_HL]; break;  // MOV B, M
+        case 0x47: register_B = register_A; break;  // MOV B, A
+
+        case 0x48: register_C = register_B; break;  // MOV C, B
+        case 0x49: register_C = register_C; break;  // MOV C, C
+        case 0x4a: register_C = register_D; break;  // MOV C, D
+        case 0x4b: register_C = register_E; break;  // MOV C, E
+        case 0x4c: register_C = register_H; break;  // MOV C, H
+        case 0x4d: register_C = register_L; break;  // MOV C, L
+        case 0x4e: register_C = memory[register_HL]; break;  // MOV C, M
+        case 0x4f: register_C = register_A; break;  // MOV C, A
+
+        case 0x50: register_D = register_B; break;  // MOV D, B
+        case 0x51: register_D = register_C; break;  // MOV D, C
+        case 0x52: register_D = register_D; break;  // MOV D, D
+        case 0x53: register_D = register_E; break;  // MOV D, E
+        case 0x54: register_D = register_H; break;  // MOV D, H
+        case 0x55: register_D = register_L; break;  // MOV D, L
+        case 0x56: register_D = memory[register_HL]; break;  // MOV D, M
+        case 0x57: register_D = register_A; break;  // MOV D, A
+
+        case 0x58: register_E = register_B; break;  // MOV E, B
+        case 0x59: register_E = register_C; break;  // MOV E, C
+        case 0x5a: register_E = register_D; break;  // MOV E, D
+        case 0x5b: register_E = register_E; break;  // MOV E, E
+        case 0x5c: register_E = register_H; break;  // MOV E, H
+        case 0x5d: register_E = register_L; break;  // MOV E, L
+        case 0x5e: register_E = memory[register_HL]; break;  // MOV E, M
         case 0x5f: register_E = register_A; break;  // MOV E, A
 
-        case 0x76: halted = true; break;            // HLT
+        case 0x60: register_H = register_B; break;  // MOV H, B
+        case 0x61: register_H = register_C; break;  // MOV H, C
+        case 0x62: register_H = register_D; break;  // MOV H, D
+        case 0x63: register_H = register_E; break;  // MOV H, E
+        case 0x64: register_H = register_H; break;  // MOV H, H
+        case 0x65: register_H = register_L; break;  // MOV H, L
+        case 0x66: register_H = memory[register_HL]; break; // MOV H, M
+        case 0x67: register_H = register_A; break;  // MOV H, A
 
+        case 0x68: register_L = register_B; break;  // MOV L, B
+        case 0x69: register_L = register_C; break;  // MOV L, C
+        case 0x6a: register_L = register_D; break;  // MOV L, D
+        case 0x6b: register_L = register_E; break;  // MOV L, E
+        case 0x6c: register_L = register_H; break;  // MOV L, H
+        case 0x6d: register_L = register_L; break;  // MOV L, L
+        case 0x6e: register_L = memory[register_HL]; break; // MOV L, M
+        case 0x6f: register_L = register_A; break;  // MOV L, A
+
+        case 0x70: memory[register_HL] = register_B; break; // MOV M, B
+        case 0x71: memory[register_HL] = register_C; break; // MOV M, C
+        case 0x72: memory[register_HL] = register_D; break; // MOV M, D
+        case 0x73: memory[register_HL] = register_E; break; // MOV M, E
+        case 0x74: memory[register_HL] = register_H; break; // MOV M, H
+        case 0x75: memory[register_HL] = register_L; break; // MOV M, L
+        case 0x76: halted = true; break;                    // HLT
+        case 0x77: memory[register_HL] = register_A; break; // MOV M, A
+
+        case 0x78: register_A = register_B; break;  // MOV A, B
+        case 0x79: register_A = register_C; break;  // MOV A, C
+        case 0x7a: register_A = register_D; break;  // MOV A, D
         case 0x7b: register_A = register_E; break;  // MOV A, E
         case 0x7c: register_A = register_H; break;  // MOV A, H
         case 0x7d: register_A = register_L; break;  // MOV A, L
+        case 0x7e: register_A = memory[register_HL]; break; // MOV A, M
+        case 0x7f: register_A = register_A; break;  // MOV A, A
 
         case 0xb9: _compare(register_C); break;  // CMP C
 
@@ -304,137 +382,16 @@ void Intel8080::XCHG() {
     register_DE = temp;
 }
 
-//https://stackoverflow.com/questions/21617970
-// uint8_t parity(uint8_t byte) {
-// 	byte ^= byte >> 4;
-// 	byte ^= byte >> 2;
-// 	byte ^= byte >> 1;
-// 	return (~byte) & 1;
-// }
 
-// void Intel8080::UnimplementedInstruction() {
-// 	program_counter--; //backup program counter
-// 	std::cout << "PC = 0x" << std::hex << program_counter << std::endl;
-// 	throw "Unimplemented Instruction.";
-// }
 
-// uint8_t Intel8080::getNextByte() {
-// 	return memory[program_counter++];
-// }
 
-// uint16_t Intel8080::getNextWord() {
-// 	uint16_t word = memory[program_counter] | (memory[program_counter + 1]) << 8;
-// 	program_counter += 2;
-// 	return word;
-// }
 
-// void Intel8080::pushWord(uint16_t word) {
-// 	memory[stack_pointer - 2] = (uint8_t)(word);
-// 	memory[stack_pointer - 1] = (uint8_t)(word >> 8);
-// 	stack_pointer -= 2;
-// }
 
-// uint16_t Intel8080::popWord() {
-// 	stack_pointer += 2;
-// 	return memory[stack_pointer - 2] | (memory[stack_pointer - 1]) << 8;
-// }
 
-// uint8_t Intel8080::addcOp(uint8_t r) {
-// 	uint16_t result = register_A + r + C;
-// 	C = result > 0xff;
-// 	S = result >> 7;
-// 	Z = (result & 0xff) == 0;
-// 	P = parity((uint8_t)result);
-// 	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-// 	return (uint8_t)result;
-// }
-
-// uint8_t Intel8080::subbOp(uint8_t r) {
-// 	uint16_t result = register_A - r - C;
-// 	C = result > 0xff;
-// 	S = result >> 7;
-// 	Z = (result & 0xff) == 0;
-// 	P = parity((uint8_t)result);
-// 	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-// 	return (uint8_t)result;
-// }
-
-// void Intel8080::compareOp(uint8_t r) {
-// 	uint16_t result = register_A - r;
-// 	C = result > 0xff;
-// 	S = result >> 7;
-// 	Z = (result & 0xff) == 0;
-// 	P = parity((uint8_t)result);
-// 	A = (register_A & 0xf) + (r & 0xf) > 0xf;
-// }
-
-// void Intel8080::op_inc(uint8_t &value) {
-// 	++value;
-// 	C = value < 1;
-// 	S = value >> 7;
-// 	Z = value == 0;
-// 	P = parity(value);
-// 	A = (value & 0xF) < 1;
-// }
-
-// void Intel8080::op_dec(uint8_t &value) {
-// 	--value;
-// 	C = value < 1;
-// 	S = value >> 7;
-// 	Z = value == 0;
-// 	P = parity(value);
-// 	A = (value & 0xF) < 1;
-// }
-
-// void Intel8080::op_add(const uint8_t value) {
-// 	register_A += value;
-// 	C = register_A < value;
-// 	S = register_A >> 7;
-// 	Z = register_A == 0;
-// 	P = parity(register_A);
-// 	A = (register_A & 0xF) < (value & 0xF); 
-// }
-
+// DAD
 // void Intel8080::op_add(const uint16_t value) {
 // 	register_HL += value;
 // 	C = register_HL < value;
-// }
-
-// void Intel8080::op_sub(const uint8_t value) {
-// 	C = register_A < value;
-// 	register_A -= value;
-// 	S = register_A >> 7;
-// 	Z = register_A == 0;
-// 	P = parity(register_A);
-// 	A = (register_A & 0xF) < (value & 0xF);
-// }
-
-// void Intel8080::op_cmp(const uint8_t value) {
-// 	// TODO implement
-// }
-
-// void Intel8080::op_xor(const uint8_t value) {
-// 	register_A ^= value;
-// 	C = 0;
-// 	S = register_A >> 7;
-// 	Z = register_A == 0;
-// 	P = parity(register_A);
-// }
-
-// void Intel8080::op_and(const uint8_t value) {
-// 	register_A &= value;
-// 	C = 0;
-// 	S = register_A >> 7;
-// 	Z = register_A == 0;
-// 	P = parity(register_A);
-// }
-
-// void Intel8080::op_or(const uint8_t value) {
-// 	register_A |= value;
-// 	C = 0;
-// 	S = register_A >> 7;
-// 	Z = register_A == 0;
-// 	P = parity(register_A);
 // }
 
 // void Intel8080::ExecuteInstruction() {
@@ -584,80 +541,7 @@ void Intel8080::XCHG() {
 // 	case 0x37: C = 1; break; //STC
 // 	case 0x3f: C = ~C; break; //CMC
 
-// 	//MOV r, r
-// 	case 0x40: register_B = register_B; break;
-// 	case 0x41: register_B = register_C; break;
-// 	case 0x42: register_B = register_D; break;
-// 	case 0x43: register_B = register_E; break;
-// 	case 0x44: register_B = register_H; break;
-// 	case 0x45: register_B = register_L; break;
-// 	case 0x46: register_B = memory[register_HL]; break;
-// 	case 0x47: register_B = register_A; break;
-
-// 	case 0x48: register_C = register_B; break;
-// 	case 0x49: register_C = register_C; break;
-// 	case 0x4a: register_C = register_D; break;
-// 	case 0x4b: register_C = register_E; break;
-// 	case 0x4c: register_C = register_H; break;
-// 	case 0x4d: register_C = register_L; break;
-// 	case 0x4e: register_C = memory[register_HL]; break;
-// 	case 0x4f: register_C = register_A; break;
-
-// 	case 0x50: register_D = register_B; break;
-// 	case 0x51: register_D = register_C; break;
-// 	case 0x52: register_D = register_D; break;
-// 	case 0x53: register_D = register_E; break;
-// 	case 0x54: register_D = register_H; break;
-// 	case 0x55: register_D = register_L; break;
-// 	case 0x56: register_D = memory[register_HL]; break;
-// 	case 0x57: register_D = register_A; break;
-
-// 	case 0x58: register_E = register_B; break;
-// 	case 0x59: register_E = register_C; break;
-// 	case 0x5a: register_E = register_D; break;
-// 	case 0x5b: register_E = register_E; break;
-// 	case 0x5c: register_E = register_H; break;
-// 	case 0x5d: register_E = register_L; break;
-// 	case 0x5e: register_E = memory[register_HL]; break;
-// 	case 0x5f: register_E = register_A; break;
-
-// 	case 0x60: register_H = register_B; break;
-// 	case 0x61: register_H = register_C; break;
-// 	case 0x62: register_H = register_D; break;
-// 	case 0x63: register_H = register_E; break;
-// 	case 0x64: register_H = register_H; break;
-// 	case 0x65: register_H = register_L; break;
-// 	case 0x66: register_H = memory[register_HL]; break;
-// 	case 0x67: register_H = register_A; break;
-
-// 	case 0x68: register_L = register_B; break;
-// 	case 0x69: register_L = register_C; break;
-// 	case 0x6a: register_L = register_D; break;
-// 	case 0x6b: register_L = register_E; break;
-// 	case 0x6c: register_L = register_H; break;
-// 	case 0x6d: register_L = register_L; break;
-// 	case 0x6e: register_L = memory[register_HL]; break;
-// 	case 0x6f: register_L = register_A; break;
-
-// 	case 0x70: memory[register_HL] = register_B; break;
-// 	case 0x71: memory[register_HL] = register_C; break;
-// 	case 0x72: memory[register_HL] = register_D; break;
-// 	case 0x73: memory[register_HL] = register_E; break;
-// 	case 0x74: memory[register_HL] = register_H; break;
-// 	case 0x75: memory[register_HL] = register_L; break;
-// 	case 0x77: memory[register_HL] = register_A; break;
-
-// 	case 0x78: register_A = register_B; break;
-// 	case 0x79: register_A = register_C; break;
-// 	case 0x7a: register_A = register_D; break;
-// 	case 0x7b: register_A = register_E; break;
-// 	case 0x7c: register_A = register_H; break;
-// 	case 0x7d: register_A = register_L; break;
-// 	case 0x7e: register_A = memory[register_HL]; break;
-// 	case 0x7f: register_A = register_A; break;
-
-// 		//HLT
-// 	case 0x76: halted = true; break;
+//  MOV R, R
 
 // 		//ADD r
 // 	case 0x80: op_add(register_B); break;
