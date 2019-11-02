@@ -6,8 +6,9 @@
 #include "../cpu/cpu.h"
 
 int main(int argc, char **argv) {
-	Intel8080 cpu;
-    constexpr std::size_t MEMORY_SIZE = 0x10000;
+	constexpr std::size_t MEMORY_SIZE = 0x10000;
+	Intel8080 cpu(MEMORY_SIZE);
+    cpu.setOutHandler(outputDevice);
     
     try {
         loadBinary("../roms/BDOS", cpu.getMemory(), MEMORY_SIZE);

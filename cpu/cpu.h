@@ -53,11 +53,10 @@ class Intel8080 {
 	};
 
 	// for lazy flag evaluation
-	struct OpCache {
-		uint8_t src;
-		uint8_t dst;
+	struct {
 		uint8_t result;
-	} opCache;
+		uint8_t carry;
+	} lazy;
 
 	// for I/O ports
 	in_handler_t in_handler;
@@ -99,19 +98,28 @@ private:
 	uint16_t popWord();
 
 	// flag operations
+	bool signFlag();
 	bool zeroFlag();
+	// A
+	bool parityFlag();
+	bool carryFlag();
 
 	// arithmetic instructions
 	void increment(uint8_t &dst);
 	void decrement(uint8_t &dst);
-	void compare(uint8_t src);
+
+	void _add(uint8_t src);
+	void _and(uint8_t src);
+	void _compare(uint8_t src);
 
 	// branching instructions
-	void jump(bool condition);
-	void call(bool condition);
+	void _jump(bool condition);
+	void _call(bool condition);
 	void _return(bool condition);
 
 	// complex opcodes
+	void RLC();
+	void RRC();
 	void XCHG();
 };
 

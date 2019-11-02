@@ -58,47 +58,68 @@ std::size_t Intel8080::executeInstruction() {
     uint8_t instruction = memory[program_counter++];
     
     switch (instruction) {
-        case 0x00: break;   // NOP
+        case 0x00: break;                           // NOP
         case 0x05: decrement(register_B); break;    // DCR B
+        case 0x07: RLC(); break;
         
-        case 0x08: break;   // NOP
+        case 0x08: break;                           // NOP
         case 0x0e: register_C = nextByte(); break;  // MVI C, d8
+        case 0x0f: RRC(); break;                    // RRC
 
-        case 0x10: break;   // NOP
-        case 0x11: register_DE = nextWord(); break;     // LXI DE, d16
-        case 0x13: ++register_DE; break;   // INX DE
-        //case 0x14: increment(register_D); break;   // INR D
+        case 0x10: break;                               // NOP
+        case 0x11: register_DE = nextWord(); break;     // LXI D, d16
+        case 0x13: ++register_DE; break;                // INX D
+        //case 0x14: increment(register_D); break;        // INR D
         
-        case 0x18: break;   // NOP
-        case 0x1a: register_A = memory[register_DE]; break; // LDAX DE
+        case 0x18: break;                                   // NOP
+        case 0x1a: register_A = memory[register_DE]; break; // LDAX D
 
-        case 0x20: break;   // NOP
+        case 0x20: break;                               // NOP
         case 0x21: register_HL = nextWord(); break;     // LXI HL, d16
         
         case 0x28: break;   // NOP
 
-        case 0x30: break;   // NOP
+        case 0x30: break;                               // NOP
         case 0x31: stack_pointer = nextWord(); break;   // LXI SP, d16
         
-        case 0x38: break;   // NOP
+        case 0x38: break;                           // NOP
         case 0x3e: register_A = nextByte(); break;  // MVI C, d8
 
-        case 0x76: halted = true; break;    // HLT
+        case 0x5f: register_E = register_A; break;  // MOV E, A
 
-        case 0xb9: compare(register_C); break;  // CMP C
+        case 0x76: halted = true; break;            // HLT
 
-        case 0xc3: jump(true); break;   // JMP d16
+        case 0x7b: register_A = register_E; break;  // MOV A, E
+        case 0x7c: register_A = register_H; break;  // MOV A, H
+        case 0x7d: register_A = register_L; break;  // MOV A, L
+
+        case 0xb9: _compare(register_C); break;  // CMP C
+
+        case 0xc3: _jump(true); break;   // JMP d16
+        case 0xc6: _add(nextByte()); break;
 
         case 0xc8: _return(zeroFlag()); break;  // RZ
-        case 0xca: jump(zeroFlag()); break;     // JZ d16
-        case 0xcd: call(true); break;   // CALL d16
+        case 0xc9: _return(true); break;        // RET
+        case 0xca: _jump(zeroFlag()); break;     // JZ d16
+        case 0xcd: _call(true); break;           // _call d16
 
-        case 0xd3: out_handler(nextByte(), register_A); break;
-        case 0xd5: pushWord(register_DE); break;    // PUSH DE
+        case 0xd1: register_DE = popWord(); break;              // POP D
+        case 0xd2: _jump(!carryFlag()); break;                  // JNC d16
+        case 0xd3: out_handler(nextByte(), register_A); break;  // OUT d8
+        case 0xd5: pushWord(register_DE); break;                // PUSH D
 
-        case 0xeb: XCHG(); break;   // XCHG
+        case 0xe1: register_HL = popWord(); break;  // POP H
+        case 0xe5: pushWord(register_HL); break;    // PUSH H
+        case 0xe6: _and(nextByte()); break;         // ANI d8
 
-        case 0xfe: compare(nextByte()); break;  //CPI d8
+        case 0xea: _jump(!parityFlag()); break; // JPE d16
+        case 0xeb: XCHG(); break;               // XCHG
+
+        case 0xf1: register_PSW = popWord(); break; // POP PSW
+        case 0xf5: pushWord(register_PSW); break;   // PUSH PSW
+
+        case 0xfa: _jump(signFlag());
+        case 0xfe: _compare(nextByte()); break;  //CPI d8
 
         default:
             program_counter--;  // restore program counter
@@ -144,35 +165,61 @@ uint16_t Intel8080::popWord() {
 }
 
 void Intel8080::increment(uint8_t &dst) {
-    opCache.dst = dst;
-    opCache.src = 1;
-    opCache.result = ++dst;
+    lazy.carry = (dst & 1) | ((dst | 1) & ~(++dst));    
+    lazy.result = dst;
 }
 
 void Intel8080::decrement(uint8_t &dst) {
-    opCache.dst = dst;
-    opCache.src = -1;
-    opCache.result = --dst;
+    lazy.carry = (dst & -1) | ((dst | -1) & ~(--dst));    
+    lazy.result = dst;
 }
 
-void Intel8080::compare(uint8_t src) {
-    opCache.src = src;
-    opCache.dst = register_A;
-    opCache.result = register_A - src;
+void Intel8080::_add(uint8_t src) {
+    lazy.result = register_A + src;
+    lazy.carry = (register_A & src) | ((register_A | src) & ~lazy.result);    
+    register_A = lazy.result;
+}
+
+void Intel8080::_and(uint8_t src) {
+    lazy.carry = 0;
+    lazy.result = register_A & src;
+}
+
+void Intel8080::_compare(uint8_t src) {
+    uint8_t result = register_A - src;
+    lazy.carry = (register_A & src) | ((register_A | src) & ~result);
+    lazy.result = result;
 }
 
 bool Intel8080::zeroFlag() {
-    return opCache.result == 0;
+    return lazy.result == 0;
 }
 
-void Intel8080::jump(bool condition) {
+bool Intel8080::signFlag() {
+    return lazy.result & 0x80;
+}
+
+// https://stackoverflow.com/questions/21617970
+bool Intel8080::parityFlag() {
+    uint8_t byte = lazy.result;
+    byte ^= byte >> 4;
+	byte ^= byte >> 2;
+	byte ^= byte >> 1;
+	return (~byte) & 1;
+}
+
+bool Intel8080::carryFlag() {
+    return lazy.carry;
+}
+
+void Intel8080::_jump(bool condition) {
     uint16_t jump_target = nextWord();
     if (condition) {
         program_counter = jump_target;
     }
 }
 
-void Intel8080::call(bool condition) {
+void Intel8080::_call(bool condition) {
     uint16_t jump_target = nextWord();
     if (condition) {
         pushWord(program_counter);
@@ -184,6 +231,16 @@ void Intel8080::_return(bool condition) {
     if (condition) {
         program_counter = popWord();
     }
+}
+
+void Intel8080::RLC() {
+    lazy.carry = (register_A & 0x80) == 0x80;
+	register_A = (register_A << 1) | (lazy.carry & 1);
+}
+
+void Intel8080::RRC() {
+    lazy.carry = register_A & 0x1;
+	register_A = (register_A >> 1) | (lazy.carry << 7);
 }
 
 void Intel8080::XCHG() {
@@ -702,7 +759,7 @@ void Intel8080::XCHG() {
 // 	case 0xe8: if (P == 1) program_counter = popWord(); break; //RPE
 // 	case 0xf8: if (S == 1) program_counter = popWord(); break; //RM
 
-// 	//CALL d16
+// 	//_call d16
 // 	case 0xcd:
 // 	case 0xdd:
 // 	case 0xed:
