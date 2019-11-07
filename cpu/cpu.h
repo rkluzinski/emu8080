@@ -11,7 +11,6 @@ class Intel8080Exception : public std::exception {
 	std::string _message;
 
 public:
-	Intel8080Exception() : _message("") {}
 	Intel8080Exception(const char *message) : _message(message) {}
 	Intel8080Exception(std::string message) : _message(message) {}
 
@@ -106,14 +105,16 @@ private:
 	void increment(uint8_t &dst);
 	void decrement(uint8_t &dst);
 
-	void _add(uint8_t src);
-	void _addc(uint8_t src);
-	void _sub(uint8_t src);
-	void _subb(uint8_t src);
+	// 8-bit arithmetic
+	void _add(uint8_t src, uint8_t carry = 0);
+	void _sub(uint8_t src, uint8_t carry = 0);
 	void _and(uint8_t src);
 	void _xor(uint8_t src);
 	void _or(uint8_t src);
 	void _compare(uint8_t src);
+
+	// 16-bit arithmetic
+	void _dadd(uint16_t src);
 
 	// branching instructions
 	void _jump(bool condition);
@@ -121,6 +122,7 @@ private:
 	void _return(bool condition);
 
 	// complex opcodes
+	void DAA();
 	void RLC();
 	void RRC();
 	void XCHG();
