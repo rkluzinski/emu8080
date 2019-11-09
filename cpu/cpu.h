@@ -43,16 +43,23 @@ class Intel8080 {
 	}; 
 	union {
 		struct {
-			uint8_t flags;
+			uint8_t register_flags;
 			uint8_t register_A;
 		};
 		uint16_t register_PSW;
 	};
 
+	// // flags
+	// bool flag_S;
+	// bool flag_Z;
+	// bool flag_A;
+	// bool flag_P;
+	// bool flag_C;
+
 	// for lazy flag evaluation
 	struct {
+		uint16_t cvector;
 		uint8_t result;
-		uint8_t carry;
 	} lazy;
 
 	// for I/O ports
@@ -97,7 +104,7 @@ private:
 	// flag operations
 	bool signFlag();
 	bool zeroFlag();
-	// A
+	bool auxCarryFlag();
 	bool parityFlag();
 	bool carryFlag();
 
@@ -125,6 +132,8 @@ private:
 	void DAA();
 	void RLC();
 	void RRC();
+	void RAL();
+	void RAR();
 	void XCHG();
 };
 
