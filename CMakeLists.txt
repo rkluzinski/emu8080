@@ -4,10 +4,11 @@ if (${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
-project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE Release)
+project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 
 add_library(intel8080 STATIC cpu/cpu.cpp cpu/cpu.h)
+target_compile_options(intel8080 PUBLIC -Wall -Wextra -Werror -march=native)
 
-add_executable(test8080 test/main.cpp test/utils.cpp test/utils.h)
+add_executable(test8080 test/main.cpp)
 target_link_libraries(test8080 PRIVATE intel8080)
