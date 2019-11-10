@@ -43,30 +43,26 @@ class Intel8080 {
 	}; 
 	union {
 		struct {
-			uint8_t register_flags;
+			uint8_t flags;
 			uint8_t register_A;
 		};
 		uint16_t register_PSW;
 	};
 
-	// // flags
-	// bool flag_S;
-	// bool flag_Z;
-	// bool flag_A;
-	// bool flag_P;
-	// bool flag_C;
-
-	// for lazy flag evaluation
-	struct {
-		uint16_t cvector;
-		uint8_t result;
-	} lazy;
+	// flags
+	// https://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
+	bool flag_S;
+	bool flag_Z;
+	bool flag_A;
+	bool flag_P;
+	bool flag_C;
 
 	// for I/O ports
 	in_handler_t in_handler;
 	out_handler_t out_handler;
 
 	bool halted;
+	bool interrupts_enabled;
 
 	uint16_t stack_pointer;
 	uint16_t program_counter;
@@ -98,15 +94,19 @@ private:
 	uint8_t nextByte();
 	uint16_t nextWord();
 
+	uint8_t readByte();
+	void writeByte(uint8_t byte);
+
+	uint16_t readWord();
+	void writeWord(uint16_t word);
+
 	void pushWord(uint16_t word);
 	uint16_t popWord();
 
-	// flag operations
-	bool signFlag();
-	bool zeroFlag();
-	bool auxCarryFlag();
-	bool parityFlag();
-	bool carryFlag();
+	// flag instructions
+	void storeFlags();
+	void loadFlags();
+	void updateFlags();
 
 	// arithmetic instructions
 	void increment(uint8_t &dst);
@@ -129,12 +129,13 @@ private:
 	void _return(bool condition);
 
 	// complex opcodes
-	void DAA();
 	void RLC();
 	void RRC();
 	void RAL();
 	void RAR();
+	void DAA();
 	void XCHG();
+	void XTHL();
 };
 
 #endif
