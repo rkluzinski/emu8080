@@ -43,6 +43,7 @@ void outputDevice(uint8_t port, uint8_t byte) {
 int main(int argc, char **argv) {
     if (argc != 2) {
         std::cout << "usage: test8080 [COM]" << std::endl;
+        return 0;
     }
 
 	constexpr std::size_t MEMORY_SIZE = 0x10000;

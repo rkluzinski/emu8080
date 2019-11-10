@@ -5,6 +5,7 @@ if (${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_STANDARD 17)
 project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 
 add_library(intel8080 STATIC cpu/cpu.cpp cpu/cpu.h)
