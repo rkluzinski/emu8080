@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include "cpu.h"
 
-Intel8080::Intel8080() {
-    memory = new uint8_t[0x10000];
-    reset();
-}
-
 Intel8080::Intel8080(std::size_t mem_size) {
     memory = new uint8_t[mem_size];
     reset();
@@ -50,55 +45,82 @@ std::size_t Intel8080::executeInstruction() {
         case 0x01: register_BC = nextWord(); break; // LXI B, d16
         case 0x02: memory[register_BC] = register_A; break; // STAX B
         case 0x03: ++register_BC; break;            // INX B
-        case 0x04: increment(register_B); break;    // INR B
-        case 0x05: decrement(register_B); break;    // DCR B
+        case 0x04: INC(register_B); break;    // INR B
+        case 0x05: DCR(register_B); break;    // DCR B
         case 0x06: register_B = nextByte(); break;  // MVI B, d8
-        case 0x07: RLC(); break;                    // RLC
+        case 0x07: // RLC
+            flag_C = (register_A & 0x80) == 0x80;
+            register_A = (register_A << 1) | flag_C;    
+            break;
         
         case 0x08: break;                           // NOP
         case 0x09: _dadd(register_BC); break;       // DAD B
         case 0x0a: register_A = memory[register_BC]; break; // LDAX B
         case 0x0b: --register_BC; break;            // DCX B
-        case 0x0c: increment(register_C); break;    // INR C
-        case 0x0d: decrement(register_C); break;    // DCR C
+        case 0x0c: INC(register_C); break;    // INR C
+        case 0x0d: DCR(register_C); break;    // DCR C
         case 0x0e: register_C = nextByte(); break;  // MVI C, d8
-        case 0x0f: RRC(); break;                    // RRC
+        case 0x0f: // RRC
+            flag_C = (register_A & 0x01) == 0x01;
+	        register_A = (register_A >> 1) | (flag_C << 7);
+            break;
 
         case 0x10: break;                           // NOP
         case 0x11: register_DE = nextWord(); break; // LXI D, d16
         case 0x12: memory[register_DE] = register_A; break; // STAX D
         case 0x13: ++register_DE; break;            // INX D
-        case 0x14: increment(register_D); break;    // INR D
-        case 0x15: decrement(register_D); break;    // DCR D
+        case 0x14: INC(register_D); break;    // INR D
+        case 0x15: DCR(register_D); break;    // DCR D
         case 0x16: register_D = nextByte(); break;  // MVI D, d8
-        case 0x17: RAL(); break;                    // RAL
+        case 0x17: { // RAL
+            uint16_t result = register_A << 1;
+            register_A = result | flag_C;
+            flag_C = (result & 0x100) == 0x100;
+        } break;
         
         case 0x18: break;                                   // NOP
         case 0x19: _dadd(register_DE); break;               // DAD D
         case 0x1a: register_A = memory[register_DE]; break; // LDAX D
         case 0x1b: --register_DE; break;                    // DCX D
-        case 0x1c: increment(register_E); break;            // INR E
-        case 0x1d: decrement(register_E); break;            // DCR E
+        case 0x1c: INC(register_E); break;            // INR E
+        case 0x1d: DCR(register_E); break;            // DCR E
         case 0x1e: register_E = nextByte(); break;          // MVI E, d8
-        case 0x1f: RAR(); break;                            // RAR
+        case 0x1f: { // RAR
+            uint16_t result = register_A | (flag_C << 8);
+            register_A = (result >> 1);
+            flag_C = (result & 0x01) == 0x01;
+        } break;
 
         case 0x20: break;                           // NOP
         case 0x21: register_HL = nextWord(); break; // LXI H, d16
         // TODO fix this
         case 0x22: *((uint16_t*) &memory[nextWord()]) = register_HL; break; // SHLD
         case 0x23: ++register_HL; break;            // INX H
-        case 0x24: increment(register_H); break;    // INR H
-        case 0x25: decrement(register_H); break;    // DCR H
+        case 0x24: INC(register_H); break;    // INR H
+        case 0x25: DCR(register_H); break;    // DCR H
         case 0x26: register_H = nextByte(); break;  // MVI H, d8
-        case 0x27: DAA(); break;                    // DAA
+        case 0x27: // DAA
+            if ((register_A & 0x0f) > 0x09 || flag_A) {
+                register_A += 0x06;
+                flag_A = (register_A & 0xf) < 0x06;
+            }
+            if ((register_A & 0xf0) > 0x90 || flag_C) {
+                register_A += 0x60;
+                flag_C = register_A < 0x60;
+            }
+
+            flag_S = (int8_t) register_A < 0;
+            flag_Z = register_A == 0;
+            flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
+            break;
         
         case 0x28: break;                           // NOP
         case 0x29: _dadd(register_HL); break;       // DAD H
         // TODO fix this
         case 0x2a: register_HL = *((uint16_t*) &memory[nextWord()]); break; // LHLD
         case 0x2b: --register_HL; break;            // DCX H
-        case 0x2c: increment(register_L); break;    // INR L
-        case 0x2d: decrement(register_L); break;    // DCR L
+        case 0x2c: INC(register_L); break;    // INR L
+        case 0x2d: DCR(register_L); break;    // DCR L
         case 0x2e: register_L = nextByte(); break;  // MVI L, d8
         case 0x2f: register_A = ~register_A; break; // CMA
 
@@ -106,8 +128,8 @@ std::size_t Intel8080::executeInstruction() {
         case 0x31: stack_pointer = nextWord(); break;       // LXI SP, d16
         case 0x32: memory[nextWord()] = register_A; break;  // STA d16
         case 0x33: ++stack_pointer; break;                  // INX SP
-        case 0x34: increment(memory[register_HL]); break;   // INR H
-        case 0x35: decrement(memory[register_HL]); break;   // DCR H
+        case 0x34: INC(memory[register_HL]); break;   // INR H
+        case 0x35: DCR(memory[register_HL]); break;   // DCR H
         case 0x36: memory[register_HL] = nextByte(); break; // MVI M, d8
         case 0x37: flag_C = true; break;                    // STC
         
@@ -115,8 +137,8 @@ std::size_t Intel8080::executeInstruction() {
         case 0x39: _dadd(stack_pointer); break;             // DAD SP
         case 0x3a: register_A = memory[nextWord()]; break;  // LDA d16
         case 0x3b: --stack_pointer; break;                  // DCX SP
-        case 0x3c: increment(register_A); break;            // INR A
-        case 0x3d: decrement(register_A); break;            // DCR A
+        case 0x3c: INC(register_A); break;            // INR A
+        case 0x3d: DCR(register_A); break;            // DCR A
         case 0x3e: register_A = nextByte(); break;          // MVI C, d8
         case 0x3f: flag_C = !flag_C; break;                 // CMC
 
@@ -295,7 +317,11 @@ std::size_t Intel8080::executeInstruction() {
         case 0xe0: _return(!flag_P); break;     // RNZ
         case 0xe1: register_HL = popWord(); break;  // POP H
         case 0xe2: _jump(!flag_P); break;     // JPE d16
-        case 0xe3: XTHL(); break;               // XTHL
+        case 0xe3: { // XTHL
+            uint16_t temp = *(uint16_t *) &memory[stack_pointer];
+            *(uint16_t *) &memory[stack_pointer] = register_HL;
+            register_HL = temp;
+        } break;
         case 0xe4: _call(!flag_P); break;     // JPO d16
         case 0xe5: pushWord(register_HL); break;    // PUSH H
         case 0xe6: _and(nextByte()); break;         // ANI d8
@@ -303,16 +329,20 @@ std::size_t Intel8080::executeInstruction() {
         case 0xe8: _return(flag_P); break;    // RPE
         case 0xe9: program_counter = register_HL; break;    // PCHL
         case 0xea: _jump(flag_P); break;      // JPE d16
-        case 0xeb: XCHG(); break;                   // XCHG
+        case 0xeb: { // XCHG
+            uint16_t temp = register_HL;
+            register_HL = register_DE;
+            register_DE = temp;
+        } break;
         case 0xec: _call(flag_P); break;      // CPE d16
         case 0xee: _xor(nextByte()); break;         // XRI d8
 
         case 0xf0: _return(!flag_S); break;     // RP
-        case 0xf1: register_PSW = popWord(); loadFlags(); break; // POP PSW
+        case 0xf1: register_PSW = popWord(); break; // POP PSW
         case 0xf2: _jump(!flag_S); break;       // JPE d16
         case 0xf3: interrupts_enabled = false; break;
         case 0xf4: _call(!flag_S); break;       // CP d16
-        case 0xf5: storeFlags(); pushWord(register_PSW); break;   // PUSH PSW
+        case 0xf5: pushWord(register_PSW); break;   // PUSH PSW
         case 0xf6: _or(nextByte()); break;          // ORI d8
 
         case 0xf8: _return(flag_S); break;  // RM
@@ -346,140 +376,103 @@ uint8_t Intel8080::nextByte() {
 }
 
 uint16_t Intel8080::nextWord() {
-    // TODO fix only works on litte-endian machines
-    uint16_t word = *(uint16_t *) &memory[program_counter];
     program_counter += 2;
-    return word;
+    return (memory[program_counter - 1] << 8) | memory[program_counter - 2]; 
 }
 
 void Intel8080::pushWord(uint16_t word) {
     stack_pointer -= 2;
-    // TODO fix only works on litte-endian machines
-    *(uint16_t *) &memory[stack_pointer] = word;
+    memory[stack_pointer] = word;
+    memory[stack_pointer + 1] = word >> 8;
 }
 
 uint16_t Intel8080::popWord() {
-    // TODO fix only works on litte-endian machines
-    uint16_t word = *(uint16_t *) &memory[stack_pointer];
     stack_pointer += 2;
-    return word;
+    return (memory[stack_pointer - 1] << 8) | memory[stack_pointer - 2]; 
 }
 
-void Intel8080::storeFlags() {
-    flags = 0x02;
-    flags |= flag_C << 0;
-    flags |= flag_P << 2;
-    flags |= flag_A << 4;
-    flags |= flag_Z << 6;
-    flags |= flag_S << 7;
+void Intel8080::INC(uint8_t &dst) {
+    dst += 1;
+    flag_S = (int8_t) dst < 0;
+	flag_Z = dst == 0;
+	flag_A = (dst & 0xf) == 0;
+	flag_P = (0x9669 >> ((dst ^ (dst >> 4)) & 0x0f)) & 1;
+    flag_C = flag_Z;
 }
 
-void Intel8080::loadFlags() {
-    flag_C = flags & 0x01;
-    flag_P = flags & 0x04;
-    flag_A = flags & 0x10;
-    flag_Z = flags & 0x40;
-    flag_S = flags & 0x80;
+void Intel8080::DCR(uint8_t &dst) {
+    dst -= 1;
+    flag_S = (int8_t) dst < 0;
+	flag_Z = dst == 0;
+	flag_A = (dst & 0xf) == 0;
+	flag_P = (0x9669 >> ((dst ^ (dst >> 4)) & 0x0f)) & 1;
+    flag_C = flag_Z;
 }
 
-void Intel8080::increment(uint8_t &dst) {
-    uint16_t result = dst + 1;
-    uint16_t carry_in = (1 ^ dst ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
-    dst = result;
+void Intel8080::_add(const uint8_t src, const uint8_t carry) {
+    register_A = register_A + src + carry;
+    flag_S = (int8_t) register_A < 0;
+	flag_Z = register_A == 0;
+	flag_A = (register_A & 0xf) < (src & 0xf);
+	flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
+    flag_C = register_A < src;
 }
 
-void Intel8080::decrement(uint8_t &dst) {
-    uint16_t result = dst - 1;
-    uint16_t carry_in = (((uint8_t) -1) ^ dst ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
-    dst = result;
+void Intel8080::_sub(const uint8_t src, const uint8_t carry) {
+    flag_C = register_A < src + carry;
+    flag_A = (register_A & 0xf) < ((src + carry) & 0xf);
+    register_A = register_A - src - carry;
+    flag_S = (int8_t) register_A < 0;
+	flag_Z = register_A == 0;
+	flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
 }
 
-void Intel8080::_add(uint8_t src, uint8_t carry) {
-    uint16_t result = register_A + src + carry;
-    uint16_t carry_in = (register_A ^ src ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
-    register_A = result;
-}
-
-void Intel8080::_sub(uint8_t src, uint8_t carry) {
-    uint16_t result = register_A - src - carry;
-    uint16_t carry_in = (register_A ^ ((uint8_t) -src) ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
-    register_A = result;
-}
-
-void Intel8080::_and(uint8_t src) {
-    uint8_t result = register_A & src;
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = 0;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
+void Intel8080::_and(const uint8_t src) {
+    register_A = register_A & src;
+    flag_S = (int8_t) register_A < 0;
+	flag_Z = register_A == 0;
+	flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
     flag_C = 0;
-    register_A = result;
 }
 
-void Intel8080::_xor(uint8_t src) {
-    uint8_t result = register_A ^ src;
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = 0;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
+void Intel8080::_xor(const uint8_t src) {
+    register_A = register_A ^ src;
+    flag_S = (int8_t) register_A < 0;
+	flag_Z = register_A == 0;
+	flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
     flag_C = 0;
-    register_A = result;
 }
 
-void Intel8080::_or(uint8_t src) {
-    uint8_t result = register_A | src;
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = 0;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
+void Intel8080::_or(const uint8_t src) {
+    register_A = register_A | src;
+    flag_S = (int8_t) register_A < 0;
+	flag_Z = register_A == 0;
+	flag_P = (0x9669 >> ((register_A ^ (register_A >> 4)) & 0x0f)) & 1;
     flag_C = 0;
-    register_A = result;
 }
 
-void Intel8080::_compare(uint8_t src) {
-    uint16_t result = register_A - src;
-    uint16_t carry_in = (register_A ^ ((uint8_t) -src) ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
+void Intel8080::_compare(const uint8_t src) {
+    uint8_t result = register_A - src;
+    flag_S = (int8_t) result < 0;
+	flag_Z = result == 0;
+	flag_A = (register_A & 0xf) < (src & 0xf);
+	flag_P = (0x9669 >> ((result ^ (result >> 4)) & 0x0f)) & 1;
+    flag_C = register_A < src;
 }
 
-void Intel8080::_dadd(uint16_t src) {
-    uint32_t result = register_HL + src;
-    flag_C = (result & 0x10000) == 0x10000;
-    register_HL = result;
+void Intel8080::_dadd(const uint16_t src) {
+    register_HL += src;
+    flag_C = register_HL < src;
 }
 
-void Intel8080::_jump(bool condition) {
+void Intel8080::_jump(const bool condition) {
     uint16_t jump_target = nextWord();
     if (condition) {
         program_counter = jump_target;
     }
 }
 
-void Intel8080::_call(bool condition) {
+void Intel8080::_call(const bool condition) {
     uint16_t jump_target = nextWord();
     if (condition) {
         pushWord(program_counter);
@@ -487,69 +480,8 @@ void Intel8080::_call(bool condition) {
     }
 }
 
-void Intel8080::_return(bool condition) {
+void Intel8080::_return(const bool condition) {
     if (condition) {
         program_counter = popWord();
     }
 }
-
-void Intel8080::DAA() {
-    uint16_t result = register_A;
-    uint16_t adjust = 0;
-    
-    if ((result & 0x0f) > 0x09 || flag_A) {
-        adjust += 0x06;
-        result += 0x06;
-    }
-    if ((result & 0xf0) > 0x90 || flag_C) {
-        adjust += 0x60;
-        result += 0x60;
-    }
-
-    uint16_t carry_in = (register_A ^ adjust ^ result);
-    flag_S = (result & 0x80) == 0x80;
-	flag_Z = (result & 0xff) == 0x00;
-	flag_A = (carry_in & 0x10) == 0x10;
-	flag_P = !((0x6996 >> ((result ^ (result >> 4)) & 0x0f)) & 1);
-    flag_C = (carry_in & 0x100) == 0x100;
-    register_A = result;
-}
-
-void Intel8080::RLC() {
-    flag_C = register_A & 0x80;
-	register_A = (register_A << 1) | flag_C;
-}
-
-void Intel8080::RRC() {
-    flag_C = register_A & 0x01;
-	register_A = (register_A >> 1) | (flag_C << 7);
-}
-
-void Intel8080::RAL() {
-    uint16_t result = register_A << 1;
-	register_A = result | flag_C;
-    flag_C = result & 0x100;
-}
-
-void Intel8080::RAR() {
-    uint16_t result = register_A | (flag_C << 8);
-	register_A = (result >> 1);
-    flag_C = result & 0x01;
-}
-
-void Intel8080::XCHG() {
-    uint16_t temp = register_HL;
-    register_HL = register_DE;
-    register_DE = temp;
-}
-
-void Intel8080::XTHL() {
-    uint16_t temp = *(uint16_t *) &memory[stack_pointer];
-    *(uint16_t *) &memory[stack_pointer] = register_HL;
-    register_HL = temp;
-}
-
-// 	case 0xf3: interrupts_enabled = false; break; //DI
-// 	case 0xfb: interrupts_enabled = true; break; //EI
-// 	};
-// }

@@ -47,6 +47,7 @@ class Intel8080 {
 			uint8_t register_A;
 		};
 		uint16_t register_PSW;
+		const volatile uint16_t cval = 0x0002;
 	};
 
 	// flags
@@ -70,7 +71,6 @@ class Intel8080 {
 	uint8_t *memory;
 
 public:
-	Intel8080();
 	Intel8080(std::size_t mem_size);
 	~Intel8080();
 
@@ -95,47 +95,33 @@ private:
 	uint16_t nextWord();
 
 	uint8_t readByte();
-	void writeByte(uint8_t byte);
+	void writeByte(const uint8_t byte);
 
 	uint16_t readWord();
 	void writeWord(uint16_t word);
 
-	void pushWord(uint16_t word);
+	void pushWord(const uint16_t word);
 	uint16_t popWord();
 
-	// flag instructions
-	void storeFlags();
-	void loadFlags();
-	void updateFlags();
-
 	// arithmetic instructions
-	void increment(uint8_t &dst);
-	void decrement(uint8_t &dst);
+	void INC(uint8_t &dst);
+	void DCR(uint8_t &dst);
 
 	// 8-bit arithmetic
-	void _add(uint8_t src, uint8_t carry = 0);
-	void _sub(uint8_t src, uint8_t carry = 0);
-	void _and(uint8_t src);
-	void _xor(uint8_t src);
-	void _or(uint8_t src);
-	void _compare(uint8_t src);
+	void _add(const uint8_t src, const uint8_t carry = 0);
+	void _sub(const uint8_t src, const uint8_t carry = 0);
+	void _and(const uint8_t src);
+	void _xor(const uint8_t src);
+	void _or(const uint8_t src);
+	void _compare(const uint8_t src);
 
 	// 16-bit arithmetic
-	void _dadd(uint16_t src);
+	void _dadd(const uint16_t src);
 
 	// branching instructions
-	void _jump(bool condition);
-	void _call(bool condition);
-	void _return(bool condition);
-
-	// complex opcodes
-	void RLC();
-	void RRC();
-	void RAL();
-	void RAR();
-	void DAA();
-	void XCHG();
-	void XTHL();
+	void _jump(const bool condition);
+	void _call(const bool condition);
+	void _return(const bool condition);
 };
 
 #endif
