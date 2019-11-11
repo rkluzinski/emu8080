@@ -61,11 +61,11 @@ class Intel8080 {
 	uint8_t (*in_callback)(uint8_t);
 	void (*out_callback)(uint8_t, uint8_t);
 
-	bool halted;
-	bool interrupts_enabled;
+	bool halted = false;
+	bool interrupts_enabled = true;
 
-	uint16_t stack_pointer;
-	uint16_t program_counter;
+	uint16_t stack_pointer = 0x8000; // TODO fix
+	uint16_t program_counter = 0x100; // TODO fix
 
 	uint8_t *memory;
 
