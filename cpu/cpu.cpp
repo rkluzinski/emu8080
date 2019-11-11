@@ -418,19 +418,29 @@ void Intel8080::loadFlags() {
     flag_C = flags & 0x01;
 }
 
+/**
+ * Emulates the INC instruction
+ * Does not affect the carry flag.
+ * Parameters:
+ *      value - The byte to increment
+ */
 uint8_t Intel8080::inr(uint8_t value) {
     value += 1;
     updateZSP(value);
 	flag_A = (value & 0xf) == 0;
-    flag_C = flag_Z;
     return value;
 }
 
+/**
+ * Emulates the DCR instruction
+ * Does not affect the carry flag.
+ * Parameters:
+ *      value - The byte to decrement
+ */
 uint8_t Intel8080::dcr(uint8_t value) {
     value -= 1;
     updateZSP(value);
-	flag_A = (value & 0xf) == 0;
-    flag_C = flag_Z;
+	flag_A = (value & 0xf) != 0xf;
     return value;
 }
 
@@ -467,19 +477,19 @@ void Intel8080::sbb(const uint8_t value) {
 }
 
 void Intel8080::ana(const uint8_t value) {
-    register_A = register_A & value;
+    register_A &= value;
     updateZSP(register_A);
     flag_C = 0;
 }
 
 void Intel8080::xra(const uint8_t value) {
-    register_A = register_A ^ value;
+    register_A ^= value;
     updateZSP(register_A);
     flag_C = 0;
 }
 
 void Intel8080::ora(const uint8_t value) {
-    register_A = register_A | value;
+    register_A |= value;
     updateZSP(register_A);
     flag_C = 0;
 }

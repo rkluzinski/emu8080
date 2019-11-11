@@ -28,3 +28,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * http://altairclone.com/downloads/manuals/8080%20Programmers%20Manual.pdf
 * https://www.seasip.info/Cpm/bios.html
 * https://bisqwit.iki.fi/jutut/kuvat/programming_examples/nesemu1/nesemu1.cc
+* http://www.vcfed.org/forum/showthread.php?63090-Intel-8080-CPU-emulator-need-help-finding-bug(s)
