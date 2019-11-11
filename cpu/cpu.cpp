@@ -102,20 +102,20 @@ std::size_t Intel8080::executeInstruction() {
         case 0x24: register_H = inr(register_H); break;     // INR H
         case 0x25: register_H = dcr(register_H); break;     // DCR H
         case 0x26: register_H = nextByte(); break;          // MVI H, d8
-        case 0x27: {                                        // DAA
-            // TODO fix this opcode
-            uint16_t result = register_A;
-            if ((result & 0x0f) > 0x09 || flag_A) {
-                result += 0x06;
-                flag_A = (result ^ register_A) & 0x10;
+        case 0x27:                                          // DAA
+            // reordering DAA allows the program to operate
+            // directly on the register_A rather than an
+            // intermediate variable.
+            if (flag_C || register_A > 0x99) {
+                flag_C = true;
+                register_A += 0x60;
             }
-            if ((result & 0xf0) > 0x90 || flag_C) {
-                result += 0x60;
+            if (flag_A || (register_A & 0xf) > 0x9) {
+                flag_A = (register_A & 0xf) > 0x9;
+                register_A += 0x06;
             }
-            flag_C = flag_C || result > 0x99;
-            updateZSP(result);
-            register_A = result;
-        } break;
+            updateZSP(register_A);
+            break;
         
         case 0x28: break;                                   // NOP
         case 0x29: dad(register_HL); break;                 // DAD H
@@ -366,7 +366,8 @@ std::size_t Intel8080::executeInstruction() {
         case 0xfe: cmp(nextByte()); break;                  // CPI d8
 
         default:
-            program_counter--;  // restore program counter
+            // restore program counter
+            program_counter--;
             throw Intel8080Exception("Unimplemented Instruction");
     }
 

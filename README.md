@@ -39,3 +39,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
     * for aux carry for SUB, SBB and CMP
 * http://www.emulator101.com/
     * inspiration for the project
+* https://github.com/begoon/i8080-core/blob/master/i8080.c
+    * reference when implementing DAA
