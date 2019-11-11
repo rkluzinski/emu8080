@@ -47,7 +47,6 @@ class Intel8080 {
 			uint8_t register_A;
 		};
 		uint16_t register_PSW;
-		const volatile uint16_t cval = 0x0002;
 	};
 
 	// flags
@@ -59,8 +58,8 @@ class Intel8080 {
 	bool flag_C;
 
 	// for I/O ports
-	in_handler_t in_handler;
-	out_handler_t out_handler;
+	uint8_t (*in_callback)(uint8_t);
+	void (*out_callback)(uint8_t, uint8_t);
 
 	bool halted;
 	bool interrupts_enabled;
@@ -94,34 +93,34 @@ private:
 	uint8_t nextByte();
 	uint16_t nextWord();
 
-	uint8_t readByte();
-	void writeByte(const uint8_t byte);
+	void push(const uint16_t word);
+	uint16_t pop();
 
-	uint16_t readWord();
-	void writeWord(uint16_t word);
+	void updateZSP(const uint8_t result);
+	void storeFlags();
+	void loadFlags();
 
-	void pushWord(const uint16_t word);
-	uint16_t popWord();
-
-	// arithmetic instructions
-	void INC(uint8_t &dst);
-	void DCR(uint8_t &dst);
+	// register inrrement and decrement
+	uint8_t inr(uint8_t value);
+	uint8_t dcr(uint8_t value);
 
 	// 8-bit arithmetic
-	void _add(const uint8_t src, const uint8_t carry = 0);
-	void _sub(const uint8_t src, const uint8_t carry = 0);
-	void _and(const uint8_t src);
-	void _xor(const uint8_t src);
-	void _or(const uint8_t src);
-	void _compare(const uint8_t src);
+	void add(const uint8_t value);
+	void adc(const uint8_t value);
+	void sub(const uint8_t value);
+	void sbb(const uint8_t value);
+	void ana(const uint8_t value);
+	void xra(const uint8_t value);
+	void ora(const uint8_t value);
+	void cmp(const uint8_t value);
 
 	// 16-bit arithmetic
-	void _dadd(const uint16_t src);
+	void dad(const uint16_t src);
 
 	// branching instructions
-	void _jump(const bool condition);
-	void _call(const bool condition);
-	void _return(const bool condition);
+	void jmp(const bool condition);
+	void call(const bool condition);
+	void ret(const bool condition);
 };
 
 #endif
