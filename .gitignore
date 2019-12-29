@@ -8,4 +8,4 @@ cpm30
 
 // project directories
 .vscode
-bin
+build
