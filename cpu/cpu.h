@@ -1,25 +1,14 @@
 #ifndef INTEL_8080_H
 #define INTEL_8080_H
 
+#include <array>
+#include <functional>
 #include <string>
 #include <cstdint>
 
-typedef uint8_t (*in_handler_t)(uint8_t);
-typedef void (*out_handler_t)(uint8_t, uint8_t);
-
-class Intel8080Exception : public std::exception {
-	std::string _message;
-
-public:
-	Intel8080Exception(const char *message) : _message(message) {}
-	Intel8080Exception(std::string message) : _message(message) {}
-
-	const char *what() {
-		return _message.c_str();
-	}
-};
-
 class Intel8080 {
+public:
+	// cpu registers
 	union { 
 		struct {
 			uint8_t register_C;
@@ -40,7 +29,7 @@ class Intel8080 {
 			uint8_t register_H;
 		};
 		uint16_t register_HL;
-	}; 
+	};
 	union {
 		struct {
 			uint8_t flags;
@@ -48,46 +37,33 @@ class Intel8080 {
 		};
 		uint16_t register_PSW;
 	};
+	
+	uint16_t stack_pointer = 0x0000; // TODO fix
+	uint16_t program_counter = 0x100; // TODO fix
 
-	// flags
-	// https://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
 	bool flag_S;
 	bool flag_Z;
 	bool flag_A;
 	bool flag_P;
 	bool flag_C;
 
-	// for I/O ports
-	uint8_t (*in_callback)(uint8_t);
-	void (*out_callback)(uint8_t, uint8_t);
+	// I/O port call backs
+	std::function<uint8_t(uint8_t)> in;
+	std::function<void(uint8_t, uint8_t)> out;
 
 	bool halted = false;
 	bool interrupts_enabled = true;
 
-	uint16_t stack_pointer = 0x8000; // TODO fix
-	uint16_t program_counter = 0x100; // TODO fix
-
-	uint8_t *memory;
-
-public:
-	Intel8080(std::size_t mem_size);
-	~Intel8080();
-
-	void reset();
-
-	void setInHandler(in_handler_t);
-	void setOutHandler(out_handler_t);
-
-	// TODO replace 
-	uint8_t *getMemory() {
-		return memory;
-	}
-
-	// debugging utilities
-	void dump();
+	// default 64 KB of RAM
+	// TODO - better solution to creating memory, templates?
+	std::array<uint8_t, 0x10000> memory;
 
 	std::size_t executeInstruction();
+	std::size_t executeFor(std::size_t);
 	std::size_t execute();
+
+	// reset the state of the CPU
+	void reset();
 
 private:
 	uint8_t nextByte();

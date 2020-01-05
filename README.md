@@ -41,3 +41,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
     * inspiration for the project
 * https://github.com/begoon/i8080-core/blob/master/i8080.c
     * reference when implementing DAA
+* https://graphics.stanford.edu/~seander/bithacks.html#ParityParallel
+    * parity implementation

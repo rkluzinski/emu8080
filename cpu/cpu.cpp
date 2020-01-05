@@ -1,32 +1,11 @@
 #include "cpu.h"
 #include <stdio.h>
 
-Intel8080::Intel8080(std::size_t mem_size) { memory = new uint8_t[mem_size]; }
-
-Intel8080::~Intel8080() { delete[] memory; }
-
 void Intel8080::reset() {
   halted = false;
   interrupts_enabled = true;
   program_counter = 0x0000;
   stack_pointer = 0x0000;
-}
-
-void Intel8080::setInHandler(in_handler_t in) { in_callback = in; }
-
-void Intel8080::setOutHandler(out_handler_t out) { out_callback = out; }
-
-void Intel8080::dump() {
-  // dump program counter, stack pointer, registers
-  printf("PC  = 0x%.4x\n", program_counter);
-  printf("SP  = 0x%.4x\n", stack_pointer);
-  printf("BC  = 0x%.4x\n", register_BC);
-  printf("DE  = 0x%.4x\n", register_DE);
-  printf("HL  = 0x%.4x\n", register_HL);
-  printf("PSW = 0x%.4x\n", register_PSW);
-
-  // dump current instruction
-  printf("Current instruction: 0x%.2x\n", memory[program_counter]);
 }
 
 std::size_t Intel8080::executeInstruction() {
@@ -103,7 +82,8 @@ std::size_t Intel8080::executeInstruction() {
   case 0x16: // MVI D, d8
     register_D = nextByte();
     break;     
-  case 0x17: { // RAL
+  case 0x17: // RAL
+  {
     uint16_t result = register_A << 1;
     register_A = result | flag_C;
     flag_C = (result & 0x100) == 0x100;
@@ -129,7 +109,8 @@ std::size_t Intel8080::executeInstruction() {
   case 0x1e: // MVI E, d8
     register_E = nextByte();
     break;     
-  case 0x1f: { // RAR
+  case 0x1f: // RAR
+  {
     uint16_t result = register_A | (flag_C << 8);
     register_A = (result >> 1);
     flag_C = (result & 0x01) == 0x01;
@@ -140,10 +121,11 @@ std::size_t Intel8080::executeInstruction() {
   case 0x21: // LXI H, d16
     register_HL = nextWord();
     break;     
-  case 0x22: { // SHLD
+  case 0x22: // SHLD
+  {
     uint16_t address = nextWord();
     memory[address] = register_HL;
-    memory[address + 1] = register_HL >> 8;
+    memory[++address] = register_HL >> 8;
   } break;
   case 0x23: // INX H
     ++register_HL;
@@ -179,9 +161,11 @@ std::size_t Intel8080::executeInstruction() {
   case 0x29: // DAD H
     dad(register_HL);
     break;     
-  case 0x2a: { // LHLD
+  case 0x2a: // LHLD
+  {
     uint16_t address = nextWord();
-    register_HL = (memory[address + 1] << 8) | memory[address];
+    register_L = memory[address];
+    register_H = memory[++address];
   } break;
   case 0x2b: // DCX H
     --register_HL;
@@ -698,7 +682,7 @@ std::size_t Intel8080::executeInstruction() {
     jmp(!flag_C);
     break; 
   case 0xd3: // OUT d8
-    out_callback(nextByte(), register_A);
+    out(nextByte(), register_A);
     break; 
   case 0xd4: // CNC d16
     call(!flag_C);
@@ -717,7 +701,7 @@ std::size_t Intel8080::executeInstruction() {
     jmp(flag_C);
     break; 
   case 0xdb: // IN d8
-    register_A = in_callback(nextByte());
+    register_A = in(nextByte());
     break; 
   case 0xdc: // CC d16
     call(flag_C);
@@ -735,8 +719,8 @@ std::size_t Intel8080::executeInstruction() {
   case 0xe2: // JPE d16
     jmp(!flag_P);
     break;     
-  case 0xe3: { // XTHL
-    // TODO not portable
+  case 0xe3: // XTHL
+  { // TODO not portable
     uint16_t temp = *(uint16_t *)&memory[stack_pointer];
     *(uint16_t *)&memory[stack_pointer] = register_HL;
     register_HL = temp;
@@ -760,7 +744,8 @@ std::size_t Intel8080::executeInstruction() {
   case 0xea: // JPE d16
     jmp(flag_P);
     break;     
-  case 0xeb: { // XCHG
+  case 0xeb: // XCHG
+  {
     uint16_t temp = register_HL;
     register_HL = register_DE;
     register_DE = temp;
@@ -815,14 +800,10 @@ std::size_t Intel8080::executeInstruction() {
     cmp(nextByte());
     break; 
 
-  default:
-    // restore program counter
-    program_counter--;
-    throw Intel8080Exception("Unimplemented Instruction");
+  default: break; // not reachable
   }
 
-  // TODO return real cycle count
-  return 1;
+  return 1; // TODO return real cycle counts
 }
 
 std::size_t Intel8080::execute() {

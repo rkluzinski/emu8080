@@ -3,9 +3,9 @@
 * program an assembler
 
 ## CPU Emulator
-* write a better API for CPU
-* implement a HAL for emulator reads and writes
-* add temp register to cpu state to replace local vars
+* template system to replace array for memory
+* implement registers portably
+* make XTHL portable
 * clang-format remaining files
 * better comments
 

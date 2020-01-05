@@ -32,7 +32,7 @@ void loadBinary(std::string path, uint8_t *memory, std::size_t length) {
     }
 }
 
-void outputDevice(uint8_t port, uint8_t byte) {
+void portOut(uint8_t port, uint8_t byte) {
     if (port != 0) {
         throw TestException("Invalid I/O port write");
     }
@@ -46,23 +46,18 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-	constexpr std::size_t MEMORY_SIZE = 0x10000;
-	Intel8080 cpu(MEMORY_SIZE);
-    cpu.setOutHandler(outputDevice);
+	Intel8080 cpu;
+    cpu.out = portOut;
     
     try {
-        loadBinary("../roms/BDOS", cpu.getMemory(), MEMORY_SIZE);
-        loadBinary(argv[1], cpu.getMemory() + 0x100, MEMORY_SIZE - 0x100);
+        loadBinary("../roms/BDOS", cpu.memory.data(), cpu.memory.size());
+        loadBinary(argv[1], cpu.memory.data() + 0x100, cpu.memory.size() - 0x100);
         
         std::size_t cycles = cpu.execute();
         std::cout << "\ncycles executed: " << cycles << std::endl;
     }
     catch (TestException &e) {
         std::cerr << "TestException: " << e.what() << std::endl;
-    }
-    catch (Intel8080Exception &e) {
-        std::cerr << "Intel8080Exception: " << e.what() << std::endl;
-        cpu.dump();
     }
 	return 0;
 }
