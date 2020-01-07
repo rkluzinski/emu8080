@@ -720,11 +720,9 @@ std::size_t Intel8080::executeInstruction() {
     jmp(!flag_P);
     break;     
   case 0xe3: // XTHL
-  { // TODO not portable
-    uint16_t temp = *(uint16_t *)&memory[stack_pointer];
-    *(uint16_t *)&memory[stack_pointer] = register_HL;
-    register_HL = temp;
-  } break;
+    std::swap(register_L, memory[stack_pointer++]);
+    std::swap(register_L, memory[stack_pointer--]);
+    break;
   case 0xe4: // JPO d16
     call(!flag_P);
     break; 
@@ -745,11 +743,8 @@ std::size_t Intel8080::executeInstruction() {
     jmp(flag_P);
     break;     
   case 0xeb: // XCHG
-  {
-    uint16_t temp = register_HL;
-    register_HL = register_DE;
-    register_DE = temp;
-  } break;
+    std::swap(register_HL, register_DE);
+    break;
   case 0xec: // CPE d16
     call(flag_P);
     break; 
@@ -819,25 +814,24 @@ std::size_t Intel8080::execute() {
 uint8_t Intel8080::nextByte() { return memory[program_counter++]; }
 
 uint16_t Intel8080::nextWord() {
-  program_counter += 2;
-  // TODO indexing not overflow safe
-  return (memory[program_counter - 1] << 8) | memory[program_counter - 2];
+  uint8_t low = nextByte();
+  uint8_t high = nextByte();
+  return (high << 8) | low;
 }
 
 void Intel8080::push(uint16_t word) {
-  memory[stack_pointer - 2] = word;
-  memory[stack_pointer - 1] = word >> 8;
-  stack_pointer -= 2;
+  memory[--stack_pointer] = word >> 8;
+  memory[--stack_pointer] = word;
 }
 
 uint16_t Intel8080::pop() {
-  stack_pointer += 2;
-  // TODO indexing not overflow safe
-  return (memory[stack_pointer - 1] << 8) | memory[stack_pointer - 2];
+  uint8_t low = memory[stack_pointer++];
+  uint8_t high = memory[stack_pointer++];
+  return (high << 8) | low;
 }
 
 void Intel8080::updateZSP(const uint8_t result) {
-  flag_S = (int8_t)result < 0;
+  flag_S = result & 0x80;
   flag_Z = result == 0;
   flag_P = (0x9669 >> ((result ^ (result >> 4)) & 0x0f)) & 1;
 }

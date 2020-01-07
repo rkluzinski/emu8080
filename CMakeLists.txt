@@ -9,7 +9,10 @@ set(CMAKE_CXX_STANDARD 17)
 project("x80806_64" VERSION 0.1 LANGUAGES CXX)
 
 add_library(intel8080 STATIC cpu/cpu.cpp cpu/cpu.h)
-target_compile_options(intel8080 PUBLIC -Wall -Wextra -Werror -Ofast -march=native)
+target_compile_options(intel8080 PUBLIC
+    -std=c++17
+    -Wall -Wextra -Werror
+    -Ofast -march=native)
 
-add_executable(test8080 test/main.cpp)
-target_link_libraries(test8080 PRIVATE intel8080)
+add_executable(test-runner test/main.cpp)
+target_link_libraries(test-runner PRIVATE intel8080)
