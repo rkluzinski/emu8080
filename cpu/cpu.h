@@ -92,16 +92,16 @@ class Intel8080 {
      * Execute the next instruction
      * Returns: How many clock cycles the CPU executed
      */
-    std::size_t executeInstruction();
-	
+    std::size_t step();
+
     /**
      * Execute until the CPU halts
-	 * Parameters:
-	 *     cycles - The target number of cycles to execute
+     * Parameters:
+     *     cycles - The target number of cycles to execute
      * Returns: The number of clock cycles executed
      */
     std::size_t execute();
-	std::size_t execute(std::size_t target_cycles);
+    std::size_t execute(std::size_t target_cycles);
 
     /**
      * Reset the CPU's state
@@ -113,9 +113,9 @@ class Intel8080 {
     void reset();
 
   private:
-	/**
-	 * The functions are part of 
-	 */
+    /**
+     * The functions are part of
+     */
 
     // immediate data operations
     uint8_t nextByte();

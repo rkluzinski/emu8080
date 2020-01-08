@@ -10,18 +10,18 @@ void Intel8080::reset() {
 std::size_t Intel8080::execute() {
     std::size_t cycles = 0;
     while (!halted)
-        cycles += executeInstruction();
+        cycles += step();
     return cycles;
 }
 
 std::size_t Intel8080::execute(std::size_t target_cycles) {
     std::size_t cycles = 0;
     while (!halted && cycles < target_cycles)
-        cycles += executeInstruction();
+        cycles += step();
     return cycles;
 }
 
-std::size_t Intel8080::executeInstruction() {
+std::size_t Intel8080::step() {
     const uint8_t instruction = memory[program_counter++];
 
     switch (instruction) {
@@ -808,8 +808,8 @@ std::size_t Intel8080::executeInstruction() {
         cmp(nextByte());
         break;
 
-    default:
-        break; // not reachable
+    default: // not reachable
+        break;
     }
 
     return 1; // TODO return real cycle counts

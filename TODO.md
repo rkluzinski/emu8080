@@ -1,6 +1,6 @@
 # CPU Emulator
 * implement remaining instructions
-* better comments
+* implement cycle counting
 
 ## Space Invaders
 * implement other hardware
