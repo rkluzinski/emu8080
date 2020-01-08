@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
     }
 
 	Intel8080 cpu;
+    cpu.program_counter = 0x100;
     cpu.out = portOut;
     
     try {

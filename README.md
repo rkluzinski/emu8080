@@ -10,7 +10,7 @@ An Intel 8080 emulator written in C++
 
 ## Running the tests
 
-## Authors
+## Author
 
 * **Ryan Kluzinski** - *Initial Work* - [rkluzinski](https://github.com/rkluzinski)
 

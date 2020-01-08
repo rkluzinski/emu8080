@@ -1,10 +1,5 @@
-# General
-* program a disassembler
-* program an assembler
-
-## CPU Emulator
-* implement registers portably
-* clang-format remaining files
+# CPU Emulator
+* implement remaining instructions
 * better comments
 
 ## Space Invaders
