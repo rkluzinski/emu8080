@@ -16,3 +16,6 @@ target_compile_options(intel8080 PUBLIC
 
 add_executable(test-runner test/main.cpp)
 target_link_libraries(test-runner PRIVATE intel8080)
+
+add_executable(space-invaders test/main.cpp)
+target_link_libraries(space-invaders PRIVATE intel8080)
