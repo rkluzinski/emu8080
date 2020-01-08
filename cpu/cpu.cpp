@@ -796,7 +796,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xe3: // XTHL
         std::swap(register_L, memory[stack_pointer++]);
-        std::swap(register_L, memory[stack_pointer--]);
+        std::swap(register_H, memory[stack_pointer--]);
         break;
     case 0xe4: // CPO a16
         call(!flag_P);
