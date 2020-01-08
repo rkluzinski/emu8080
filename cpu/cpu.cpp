@@ -21,6 +21,12 @@ std::size_t Intel8080::execute(std::size_t target_cycles) {
     return cycles;
 }
 
+// std::size_t Intel8080::step() {
+//     const uint8_t instruction = memory[program_counter++];
+
+//     return 0;
+// }
+
 std::size_t Intel8080::step() {
     const uint8_t instruction = memory[program_counter++];
 
@@ -153,11 +159,6 @@ std::size_t Intel8080::step() {
         register_H = nextByte();
         break;
     case 0x27: // DAA
-        /**
-         * Reordering DAA allows the program to operate
-         * directly on the register_A rather than an
-         * intermediate variable.
-         */
         if (flag_C || register_A > 0x99) {
             flag_C = true;
             register_A += 0x60;
@@ -650,13 +651,13 @@ std::size_t Intel8080::step() {
     case 0xc1: // POP B
         register_BC = pop();
         break;
-    case 0xc2: // JNZ d15
+    case 0xc2: // JNZ a16
         jmp(!flag_Z);
         break;
-    case 0xc3: // JMP d16
+    case 0xc3: // JMP a16
         jmp(true);
         break;
-    case 0xc4: // CNZ d16
+    case 0xc4: // CNZ a16
         call(!flag_Z);
         break;
     case 0xc5: // PUSH B
@@ -665,6 +666,10 @@ std::size_t Intel8080::step() {
     case 0xc6: // ADI d8
         add(nextByte());
         break;
+    case 0xc7: // RST 0
+        push(program_counter);
+        program_counter = 0x0000;
+        break;
 
     case 0xc8: // RZ
         ret(flag_Z);
@@ -672,17 +677,24 @@ std::size_t Intel8080::step() {
     case 0xc9: // RET
         ret(true);
         break;
-    case 0xca: // JZ d16
+    case 0xca: // JZ a16
         jmp(flag_Z);
         break;
-    case 0xcc: // CZ d16
+    case 0xcb: // *JMP a16
+        jmp(true);
+        break;
+    case 0xcc: // CZ a16
         call(flag_Z);
         break;
-    case 0xcd: // CALL d16
+    case 0xcd: // CALL a16
         call(true);
         break;
     case 0xce: // ACI d8
         adc(nextByte());
+        break;
+    case 0xcf: // RST 1
+        push(program_counter);
+        program_counter = 0x0008;
         break;
 
     case 0xd0: // RNC
@@ -691,36 +703,47 @@ std::size_t Intel8080::step() {
     case 0xd1: // POP D
         register_DE = pop();
         break;
-    case 0xd2: // JNC d16
+    case 0xd2: // JNC a16
         jmp(!flag_C);
         break;
     case 0xd3: // OUT d8
         out(nextByte(), register_A);
         break;
-    case 0xd4: // CNC d16
+    case 0xd4: // CNC a16
         call(!flag_C);
         break;
     case 0xd5: // PUSH D
         push(register_DE);
         break;
-    case 0xd6: // SUI d6
+    case 0xd6: // SUI d8
         sub(nextByte());
         break;
+    case 0xd7: // RST 2
+        push(program_counter);
+        program_counter = 0x0010;
+        break;
 
-    case 0xd8: // RC d16
+    case 0xd8: // RC a16
         ret(flag_C);
         break;
-    case 0xda: // JC d16
+    case 0xda: // JC a16
         jmp(flag_C);
         break;
     case 0xdb: // IN d8
         register_A = in(nextByte());
         break;
-    case 0xdc: // CC d16
+    case 0xdc: // CC a16
         call(flag_C);
         break;
-    case 0xde: // SBI d16
+    case 0xdd: // *CALL a16
+        call(true);
+        break;
+    case 0xde: // SBI d8
         sbb(nextByte());
+        break;
+    case 0xdf: // RST 3
+        push(program_counter);
+        program_counter = 0x0018;
         break;
 
     case 0xe0: // RNZ
@@ -729,14 +752,14 @@ std::size_t Intel8080::step() {
     case 0xe1: // POP H
         register_HL = pop();
         break;
-    case 0xe2: // JPE d16
+    case 0xe2: // JPE a16
         jmp(!flag_P);
         break;
     case 0xe3: // XTHL
         std::swap(register_L, memory[stack_pointer++]);
         std::swap(register_L, memory[stack_pointer--]);
         break;
-    case 0xe4: // JPO d16
+    case 0xe4: // JPO a16
         call(!flag_P);
         break;
     case 0xe5: // PUSH H
@@ -745,6 +768,10 @@ std::size_t Intel8080::step() {
     case 0xe6: // ANI d8
         ana(nextByte());
         break;
+    case 0xe7: // RST 4
+        push(program_counter);
+        program_counter = 0x0020;
+        break;
 
     case 0xe8: // RPE
         ret(flag_P);
@@ -752,17 +779,24 @@ std::size_t Intel8080::step() {
     case 0xe9: // PCHL
         program_counter = register_HL;
         break;
-    case 0xea: // JPE d16
+    case 0xea: // JPE a16
         jmp(flag_P);
         break;
     case 0xeb: // XCHG
         std::swap(register_HL, register_DE);
         break;
-    case 0xec: // CPE d16
+    case 0xec: // CPE a16
         call(flag_P);
+        break;
+    case 0xed: // *CALL a16
+        call(true);
         break;
     case 0xee: // XRI d8
         xra(nextByte());
+        break;
+    case 0xef: // RST 5
+        push(program_counter);
+        program_counter = 0x0028;
         break;
 
     case 0xf0: // RP
@@ -772,13 +806,13 @@ std::size_t Intel8080::step() {
         register_PSW = pop();
         loadFlags();
         break;
-    case 0xf2: // JPE d16
+    case 0xf2: // JPE a16
         jmp(!flag_S);
         break;
     case 0xf3: // DI
         interrupts_enabled = false;
         break;
-    case 0xf4: // CP d16
+    case 0xf4: // CP a16
         call(!flag_S);
         break;
     case 0xf5: // PUSH PSW
@@ -788,6 +822,10 @@ std::size_t Intel8080::step() {
     case 0xf6: // ORI d8
         ora(nextByte());
         break;
+    case 0xf7: // RST 6
+        push(program_counter);
+        program_counter = 0x0030;
+        break;
 
     case 0xf8: // RM
         ret(flag_S);
@@ -795,17 +833,24 @@ std::size_t Intel8080::step() {
     case 0xf9: // SPHL
         stack_pointer = register_HL;
         break;
-    case 0xfa: // JM d16
+    case 0xfa: // JM a16
         jmp(flag_S);
         break;
     case 0xfb: // EI
         interrupts_enabled = true;
         break;
-    case 0xfc: // CM d16
+    case 0xfc: // CM a16
         call(flag_S);
+        break;
+    case 0xfd: // *CALL a16
+        call(true);
         break;
     case 0xfe: // CPI d8
         cmp(nextByte());
+        break;
+    case 0xff: // RST 4
+        push(program_counter);
+        program_counter = 0x0038;
         break;
 
     default: // not reachable

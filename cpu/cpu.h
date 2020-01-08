@@ -97,7 +97,7 @@ class Intel8080 {
     /**
      * Execute until the CPU halts
      * Parameters:
-     *     cycles - The target number of cycles to execute
+     *     cycles (optional) - The target cycles to execute
      * Returns: The number of clock cycles executed
      */
     std::size_t execute();

@@ -1,5 +1,4 @@
 # CPU Emulator
-* implement remaining instructions
 * implement cycle counting
 
 ## Space Invaders
