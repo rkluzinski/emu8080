@@ -103,6 +103,13 @@ class Intel8080 {
     std::size_t execute();
     std::size_t execute(std::size_t target_cycles);
 
+	/**
+	 * Calls the given interrupt service routines
+	 * Parameter:
+	 *     isr - The number of the given ISR (0-7)
+	 */
+	void interrupt(const int isr);
+
     /**
      * Reset the CPU's state
      * - Unhalts CPU
@@ -113,9 +120,11 @@ class Intel8080 {
     void reset();
 
   private:
-    /**
-     * The functions are part of
-     */
+	// interrupt service routine vector
+	static const std::array<uint16_t, 8> interrupt_vector;
+
+	// instruction timings
+	static const std::array<std::size_t, 256> instruction_timing;
 
     // immediate data operations
     uint8_t nextByte();

@@ -1,11 +1,31 @@
 #include "cpu.h"
 
-void Intel8080::reset() {
-    halted = false;
-    interrupts_enabled = true;
-    program_counter = 0x0000;
-    stack_pointer = 0x0000;
-}
+const std::array<uint16_t, 8> Intel8080::interrupt_vector = {
+    0x0, 0x8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38
+};
+
+/**
+ * Number of clock cycles needed to execute each instruction.
+ * Special cases handled in conditional jmp, call, and ret
+ */
+const std::array<std::size_t, 256> Intel8080::instruction_timing = {
+    4, 10,  7,  5,  5,  5,  7,  4,  4, 10,  7,  5,  5,  5,  7,  4,
+    4, 10,  7,  5,  5,  5,  7,  4,  4, 10,  7,  5,  5,  5,  7,  4,
+    4, 10, 16,  5,  5,  5,  7,  4,  4, 10, 16,  5,  5,  5,  7,  4,
+    4, 10, 13,  5, 10, 10, 10,  4,  4, 10, 13,  5,  5,  5,  7,  4,
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,
+    7,  7,  7,  7,  7,  7,  7,  7,  5,  5,  5,  5,  5,  5,  7,  5,
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,
+    5, 10, 10, 10, 11, 11,  7, 11,  5, 10, 10, 10, 11, 17,  7, 11,
+    5, 10, 10, 10, 11, 11,  7, 11,  5, 10, 10, 10, 11, 17,  7, 11,
+    5, 10, 10, 18, 11, 11,  7, 11,  5,  5, 10,  5, 11, 17,  7, 11,
+    5, 10, 10,  4, 11, 11,  7, 11,  5,  5, 10,  4, 11, 17,  7, 11,
+};
 
 std::size_t Intel8080::execute() {
     std::size_t cycles = 0;
@@ -21,14 +41,21 @@ std::size_t Intel8080::execute(std::size_t target_cycles) {
     return cycles;
 }
 
-// std::size_t Intel8080::step() {
-//     const uint8_t instruction = memory[program_counter++];
+void Intel8080::interrupt(const int isr) {
+    push(program_counter);
+    program_counter = interrupt_vector[isr];
+}
 
-//     return 0;
-// }
+void Intel8080::reset() {
+    halted = false;
+    interrupts_enabled = true;
+    program_counter = 0x0000;
+    stack_pointer = 0x0000;
+}
 
 std::size_t Intel8080::step() {
     const uint8_t instruction = memory[program_counter++];
+    std::size_t cycles = instruction_timing[instruction];
 
     switch (instruction) {
     case 0x00: // NOP
@@ -647,6 +674,7 @@ std::size_t Intel8080::step() {
 
     case 0xc0: // RNZ
         ret(!flag_Z);
+        cycles += !flag_Z ? 6 : 0;
         break;
     case 0xc1: // POP B
         register_BC = pop();
@@ -659,6 +687,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xc4: // CNZ a16
         call(!flag_Z);
+        cycles += !flag_Z ? 6 : 0;
         break;
     case 0xc5: // PUSH B
         push(register_BC);
@@ -668,11 +697,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xc7: // RST 0
         push(program_counter);
-        program_counter = 0x0000;
+        program_counter = interrupt_vector[0];
         break;
 
     case 0xc8: // RZ
         ret(flag_Z);
+        cycles += flag_Z ? 6 : 0;
         break;
     case 0xc9: // RET
         ret(true);
@@ -685,6 +715,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xcc: // CZ a16
         call(flag_Z);
+        cycles += flag_Z ? 6 : 0;
         break;
     case 0xcd: // CALL a16
         call(true);
@@ -694,11 +725,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xcf: // RST 1
         push(program_counter);
-        program_counter = 0x0008;
+        program_counter = interrupt_vector[1];
         break;
 
     case 0xd0: // RNC
         ret(!flag_C);
+        cycles += !flag_C ? 6 : 0;
         break;
     case 0xd1: // POP D
         register_DE = pop();
@@ -711,6 +743,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xd4: // CNC a16
         call(!flag_C);
+        cycles += !flag_C ? 6 : 0;
         break;
     case 0xd5: // PUSH D
         push(register_DE);
@@ -720,11 +753,15 @@ std::size_t Intel8080::step() {
         break;
     case 0xd7: // RST 2
         push(program_counter);
-        program_counter = 0x0010;
+        program_counter = interrupt_vector[2];
         break;
 
     case 0xd8: // RC a16
         ret(flag_C);
+        cycles += flag_C ? 6 : 0;
+        break;
+    case 0xd9: // *RET
+        ret(true);
         break;
     case 0xda: // JC a16
         jmp(flag_C);
@@ -734,6 +771,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xdc: // CC a16
         call(flag_C);
+        cycles += flag_C ? 6 : 0;
         break;
     case 0xdd: // *CALL a16
         call(true);
@@ -743,11 +781,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xdf: // RST 3
         push(program_counter);
-        program_counter = 0x0018;
+        program_counter = interrupt_vector[3];
         break;
 
-    case 0xe0: // RNZ
+    case 0xe0: // RPO
         ret(!flag_P);
+        cycles += !flag_P ? 6 : 0;
         break;
     case 0xe1: // POP H
         register_HL = pop();
@@ -759,8 +798,9 @@ std::size_t Intel8080::step() {
         std::swap(register_L, memory[stack_pointer++]);
         std::swap(register_L, memory[stack_pointer--]);
         break;
-    case 0xe4: // JPO a16
+    case 0xe4: // CPO a16
         call(!flag_P);
+        cycles += !flag_P ? 6 : 0;
         break;
     case 0xe5: // PUSH H
         push(register_HL);
@@ -770,11 +810,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xe7: // RST 4
         push(program_counter);
-        program_counter = 0x0020;
+        program_counter = interrupt_vector[4];
         break;
 
     case 0xe8: // RPE
         ret(flag_P);
+        cycles += flag_P ? 6 : 0;
         break;
     case 0xe9: // PCHL
         program_counter = register_HL;
@@ -787,6 +828,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xec: // CPE a16
         call(flag_P);
+        cycles += flag_P ? 6 : 0;
         break;
     case 0xed: // *CALL a16
         call(true);
@@ -796,11 +838,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xef: // RST 5
         push(program_counter);
-        program_counter = 0x0028;
+        program_counter = interrupt_vector[5];
         break;
 
     case 0xf0: // RP
         ret(!flag_S);
+        cycles += !flag_S ? 6 : 0;
         break;
     case 0xf1: // POP PSW
         register_PSW = pop();
@@ -814,6 +857,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xf4: // CP a16
         call(!flag_S);
+        cycles += !flag_S ? 6 : 0;
         break;
     case 0xf5: // PUSH PSW
         storeFlags();
@@ -824,11 +868,12 @@ std::size_t Intel8080::step() {
         break;
     case 0xf7: // RST 6
         push(program_counter);
-        program_counter = 0x0030;
+        program_counter = interrupt_vector[6];
         break;
 
     case 0xf8: // RM
         ret(flag_S);
+        cycles += flag_S ? 6 : 0;
         break;
     case 0xf9: // SPHL
         stack_pointer = register_HL;
@@ -841,6 +886,7 @@ std::size_t Intel8080::step() {
         break;
     case 0xfc: // CM a16
         call(flag_S);
+        cycles += flag_S ? 6 : 0;
         break;
     case 0xfd: // *CALL a16
         call(true);
@@ -848,16 +894,16 @@ std::size_t Intel8080::step() {
     case 0xfe: // CPI d8
         cmp(nextByte());
         break;
-    case 0xff: // RST 4
+    case 0xff: // RST 7
         push(program_counter);
-        program_counter = 0x0038;
+        program_counter = interrupt_vector[7];
         break;
 
     default: // not reachable
         break;
     }
 
-    return 1; // TODO return real cycle counts
+    return cycles;
 }
 
 uint8_t Intel8080::nextByte() { return memory[program_counter++]; }
