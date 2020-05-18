@@ -4,15 +4,21 @@ A library for emulating the Intel 8080 microprocessor.
 
 ## Building
 
-Use [CMake](https://cmake.org/) to build the library.
+Use [CMake](https://cmake.org/) to build the library and test runner.
 
-```bash
+```
 $ > mkdir build && cd build
 $ > cmake ..
 $ > make
 ```
 
 ## Testing
+
+Use ```test-runner``` to run the cpu tests found in the [test/com](test/com/) folder.
+
+```
+$ > ./build/test-runner test/com/[TEST].COM
+```
 
 ## Usage
 

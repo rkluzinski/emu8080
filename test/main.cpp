@@ -42,5 +42,7 @@ int main(int argc, char **argv) {
     
     cpu.execute();
 
+    std::cout << std::endl;
+
 	return 0;
 }

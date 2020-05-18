@@ -89,12 +89,6 @@ class Intel8080 {
     bool interrupts_enabled = true;
 
     /**
-     * Execute the next instruction
-     * Returns: How many clock cycles the CPU executed
-     */
-    std::size_t step();
-
-    /**
      * Execute until the CPU halts
      * Parameters:
      *     cycles (optional) - The target cycles to execute
@@ -118,6 +112,12 @@ class Intel8080 {
      * - Does not affect registers
      */
     void reset();
+
+    /**
+     * Execute the next instruction
+     * Returns: How many clock cycles the CPU executed
+     */
+    std::size_t step();
 
   private:
 	// interrupt service routine vector

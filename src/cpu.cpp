@@ -27,6 +27,18 @@ const std::array<std::size_t, 256> Intel8080::instruction_timing = {
     5, 10, 10,  4, 11, 11,  7, 11,  5,  5, 10,  4, 11, 17,  7, 11,
 };
 
+void Intel8080::interrupt(const int isr) {
+    push(program_counter);
+    program_counter = interrupt_vector[isr];
+}
+
+void Intel8080::reset() {
+    halted = false;
+    interrupts_enabled = true;
+    program_counter = 0x0000;
+    stack_pointer = 0x0000;
+}
+
 std::size_t Intel8080::execute() {
     std::size_t cycles = 0;
     while (!halted)
@@ -39,18 +51,6 @@ std::size_t Intel8080::execute(std::size_t target_cycles) {
     while (!halted && cycles < target_cycles)
         cycles += step();
     return cycles;
-}
-
-void Intel8080::interrupt(const int isr) {
-    push(program_counter);
-    program_counter = interrupt_vector[isr];
-}
-
-void Intel8080::reset() {
-    halted = false;
-    interrupts_enabled = true;
-    program_counter = 0x0000;
-    stack_pointer = 0x0000;
 }
 
 std::size_t Intel8080::step() {
