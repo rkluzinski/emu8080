@@ -40,9 +40,8 @@ int main(int argc, char **argv) {
     std::copy(bdos.begin(), bdos.end(), cpu.memory.begin());
 	test.read((char *) cpu.memory.data() + 0x100, cpu.memory.size() - 0x100);
     
-    cpu.execute();
-
-    std::cout << std::endl;
+    std::size_t cycles = cpu.execute();
+    std::cout << std::endl << "Cycles executed: " << cycles << std::endl;
 
 	return 0;
 }
