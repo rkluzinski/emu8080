@@ -1,5 +1,4 @@
-        hlt
-        nop
+        out 0
         nop
         nop
         nop
@@ -11,11 +10,11 @@
         jz      strOut
         jmp     0
 chrOut: mov     a, e
-        out     0
+        out     1
         ret
 strOut: ldax    de
         cpi     0x24
         rz 
-        out     0
+        out     1
         inx     de
         jmp     strOut

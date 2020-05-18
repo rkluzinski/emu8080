@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#include "../cpu/cpu.h"
+#include "../src/cpu.h"
 
 // assembled test/BDOS.ASM file
 const std::array<uint8_t, 0x22> bdos = {
@@ -40,8 +40,7 @@ int main(int argc, char **argv) {
     std::copy(bdos.begin(), bdos.end(), cpu.memory.begin());
 	test.read((char *) cpu.memory.data() + 0x100, cpu.memory.size() - 0x100);
     
-    // execute program
-    auto cycles = cpu.execute();
-    std::cout << std::endl << "Cycles executed: " << cycles << std::endl;
+    cpu.execute();
+
 	return 0;
 }

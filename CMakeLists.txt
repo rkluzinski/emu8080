@@ -6,16 +6,17 @@ endif()
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)
-project("x80806_64" VERSION 0.1 LANGUAGES CXX)
+project("Emu8080" VERSION 0.1 LANGUAGES CXX)
 
-add_library(intel8080 STATIC cpu/cpu.cpp cpu/cpu.h)
-target_compile_options(intel8080 PUBLIC
-    -std=c++17
+# Build the library
+add_library(emu8080 STATIC src/cpu.cpp src/cpu.h)
+target_compile_options(emu8080 PUBLIC
     -Wall -Wextra -Werror
     -Ofast -march=native)
 
+# Build the test harness executable
 add_executable(test-runner test/main.cpp)
-target_link_libraries(test-runner PRIVATE intel8080)
+target_link_libraries(test-runner PRIVATE emu8080)
 
-add_executable(space-invaders test/main.cpp)
-target_link_libraries(space-invaders PRIVATE intel8080)
+# add_executable(space-invaders test/main.cpp)
+# target_link_libraries(space-invaders PRIVATE intel8080)

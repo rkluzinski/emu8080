@@ -1,18 +1,24 @@
-# x80806_64
+# Emu8080
 
-An Intel 8080 emulator written in C++
+A library for emulating the Intel 8080 microprocessor.
 
-## Getting Started
+## Building
 
-### Prerequisites
+Use [CMake](https://cmake.org/) to build the library.
 
-### Building
+```bash
+$ > mkdir build && cd build
+$ > cmake ..
+$ > make
+```
 
-## Running the tests
+## Testing
+
+## Usage
 
 ## Author
 
-* **Ryan Kluzinski** - *Initial Work* - [rkluzinski](https://github.com/rkluzinski)
+* **Ryan Kluzinski** - [rkluzinski](https://github.com/rkluzinski)
 
 ## License
 

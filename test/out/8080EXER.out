@@ -1,0 +1,27 @@
+8080 instruction exerciser
+dad <b,d,h,sp>................  OK
+aluop nn......................  OK
+aluop <b,c,d,e,h,l,m,a>.......  OK
+<daa,cma,stc,cmc>.............  OK
+<inr,dcr> a...................  OK
+<inr,dcr> b...................  OK
+<inx,dcx> b...................  OK
+<inr,dcr> c...................  OK
+<inr,dcr> d...................  OK
+<inx,dcx> d...................  OK
+<inr,dcr> e...................  OK
+<inr,dcr> h...................  OK
+<inx,dcx> h...................  OK
+<inr,dcr> l...................  OK
+<inr,dcr> m...................  OK
+<inx,dcx> sp..................  OK
+lhld nnnn.....................  OK
+shld nnnn.....................  OK
+lxi <b,d,h,sp>,nnnn...........  OK
+ldax <b,d>....................  OK
+mvi <b,c,d,e,h,l,m,a>,nn......  OK
+mov <bcdehla>,<bcdehla>.......  OK
+sta nnnn / lda nnnn...........  OK
+<rlc,rrc,ral,rar>.............  OK
+stax <b,d>....................  OK
+Tests complete
